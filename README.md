@@ -69,6 +69,14 @@ the same type, and allowing for custom wrapper error types
 [![Docs.rs](https://docs.rs/errorstash/badge.svg)](https://docs.rs/errorstash)
 [![CI](https://github.com/StupendousYappi/errorstash/workflows/CI/badge.svg)](https://github.com/StupendousYappi/errorstash/actions)
 
+## Related projects
+
+This project was inspired by
+[lazy_errors](https://github.com/Lintermute/lazy_errors), including the error
+stash concept and the integration with the `Result` and `Iterator` types. This
+project attempts to offer a simpler API and support for fully custom wrapper
+error types.
+
 ## License
 
 Licensed under either of
