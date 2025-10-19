@@ -2,6 +2,12 @@
 
 A library for collecting multiple related errors, and reporting them together.
 
+Error stashes are useful when you want to perform multiple operations that may
+independently fail, and you want to collect all errors that occur and return
+them together, rather than failing fast on the first error. For example, when
+validating data, you may want to provide the caller with a complete list of
+validation errors so that they can fix them all at once.
+
 ```rust
 use std::collections::HashSet;
 use url::Url;
@@ -46,6 +52,18 @@ impl UrlValidator {
     }
 }
 ```
+
+This crate defines an
+[`ErrorStash`](https://docs.rs/errorstash/latest/errorstash/trait.ErrorStash.html)
+trait along with two struct implementations:
+- [`BoxedStash`](https://docs.rs/errorstash/latest/errorstash/struct.BoxedStash.html)
+- a stash that wraps its child errors in a `Box<dyn Error + Send + Sync +
+'static>`, allowing a mix of different child error types, and wrapping them in
+an
+[`ErrorList`](https://docs.rs/errorstash/latest/errorstash/struct.ErrorList.html)
+- [`TypedStash`](https://docs.rs/errorstash/latest/errorstash/struct.TypedStash.html)
+- a stash with a generic type for its child errors, requiring all errors to have
+the same type, and allowing for custom wrapper error types
 
 [![Crates.io](https://img.shields.io/crates/v/errorstash.svg)](https://crates.io/crates/errorstash)
 [![Docs.rs](https://docs.rs/errorstash/badge.svg)](https://docs.rs/errorstash)
