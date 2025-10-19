@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-use crate::error_list::{DEFAULT_SUMMARY, ErrorList};
+use crate::error_list::{ErrorList, DEFAULT_SUMMARY};
 use crate::error_stash::ErrorStashInternal;
 use crate::{ErrorStash, StashableResult};
 
@@ -309,7 +309,7 @@ where
 
     /// Adds an error and immediately returns `Err(W)` with all collected
     /// errors.
-    fn fail_now(&mut self, e: E) -> Result<(), W> {
+    pub fn fail_now(&mut self, e: E) -> Result<(), W> {
         self.mut_errors().push(e);
         let wrapper = self.consume();
         Err(wrapper)
@@ -402,7 +402,7 @@ where
 
     fn or_fail(self, stash: &mut TypedStash<E, W>) -> Result<T, W> {
         self.map_err(|e| {
-            stash.mut_errors().push(e.into());
+            stash.mut_errors().push(e);
             stash.consume()
         })
     }
@@ -426,7 +426,7 @@ where
         match self {
             Ok(v) => Some(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 None
             }
         }
@@ -436,7 +436,7 @@ where
         match self {
             Ok(v) => Ok(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 Err(stash.consume())
             }
         }
@@ -461,7 +461,7 @@ where
         match self {
             Ok(v) => Some(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 None
             }
         }
@@ -471,7 +471,7 @@ where
         match self {
             Ok(v) => Ok(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 Err(stash.consume())
             }
         }
@@ -1312,7 +1312,7 @@ mod tests {
 
         // Borrow the inner ErrorList via downcast_ref to inspect it without
         // moving it out of the anyhow::Error (avoids size/coercion issues).
-        let recovered_ref = (&any_err).downcast_ref::<ErrorList<String>>();
+        let recovered_ref = (any_err).downcast_ref::<ErrorList<String>>();
         assert!(recovered_ref.is_some());
         let recovered = recovered_ref.unwrap();
         assert_eq!(recovered.len(), 2);
@@ -1348,7 +1348,7 @@ mod tests {
 
         // Borrow the inner ErrorList via downcast_ref to inspect it without
         // moving it out of the eyre::Report.
-        let recovered_ref = (&report).downcast_ref::<ErrorList<String>>();
+        let recovered_ref = (report).downcast_ref::<ErrorList<String>>();
         assert!(recovered_ref.is_some());
         let recovered = recovered_ref.unwrap();
         assert_eq!(recovered.len(), 2);

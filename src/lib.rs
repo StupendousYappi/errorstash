@@ -12,29 +12,29 @@
 //! use url::Url;
 //! use thiserror::Error;
 //! use errorstash::{ErrorStash, BoxedStash, BoxedErrors, StashableResult};
-//! 
+//!
 //! #[derive(Error, Debug)]
 //! #[error("Domain '{0}' is not trusted")]
 //! struct InvalidDomainError(String);
-//! 
+//!
 //! #[derive(Debug, PartialEq, Eq)]
 //! struct TrustedUrl(String);
-//! 
+//!
 //! #[derive(Debug)]
 //! struct UrlValidator(HashSet<String>);
-//! 
+//!
 //! impl UrlValidator {
 //!     fn new(trusted_domains: Vec<String>) -> Self {
 //!         Self(trusted_domains.into_iter().collect())
 //!     }
-//! 
+//!
 //!     /// Validates that the given URL complies with our requirements, and if
 //!     /// so, returns its domain as a `TrustedUrl`.
 //!     fn validate_url(&self, url: &str) -> Result<TrustedUrl, BoxedErrors> {
 //!         let mut stash = BoxedStash::with_summary("Invalid URL:");
 //!         let parsed = Url::parse(url)
 //!             .or_fail(&mut stash)?;
-//! 
+//!
 //!         stash
 //!             .check(parsed.scheme() == "https", "URL must use https schema")
 //!             .check(parsed.port().is_none(), "URL must not specify a port");
@@ -46,7 +46,7 @@
 //!             stash.push(e);
 //!         }
 //!         stash.fail_unless_empty()?;
-//! 
+//!
 //!         let as_safe = TrustedUrl(url.into());
 //!         Ok(as_safe)
 //!     }
@@ -98,8 +98,8 @@
 //!   provided stash.
 //! - [`or_fail(&mut stash)`][StashableResult::or_fail]: Converts a
 //!   `Result<T, E>` into a `Result<T, W>`, where `W` is the stash's
-//!    wrapper type and contains the current error and any errors
-//!    previously collected by the stash.
+//!   wrapper type and contains the current error and any errors
+//!   previously collected by the stash.
 //!
 //! The [`or_stash`][StashableResult::or_stash] method is useful when you want
 //! to continue processing after an error occurs to collect any additional
