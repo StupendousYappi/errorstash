@@ -58,7 +58,7 @@ This crate defines an
 trait along with two struct implementations:
 - [`BoxedStash`](https://docs.rs/errorstash/latest/errorstash/struct.BoxedStash.html)
   a stash that wraps its child errors in a `Box<dyn Error + Send + Sync +
-'static>`, allowing a mix of different child error types, and wrapping them in
+'static>`, allowing a mix of different child error types, and emitting them together in
 an
 [`ErrorList`](https://docs.rs/errorstash/latest/errorstash/struct.ErrorList.html)
 - [`TypedStash`](https://docs.rs/errorstash/latest/errorstash/struct.TypedStash.html)
