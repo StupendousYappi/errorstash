@@ -24,7 +24,7 @@ impl UrlValidator {
     }
 
     /// Validates that the given URL complies with our requirements, and if
-    /// so, returns its domain as a `TrustedUrl`.
+    /// so, returns it as a `TrustedUrl`.
     fn validate_url(&self, url: &str) -> Result<TrustedUrl, BoxedErrors> {
         let mut stash = BoxedStash::with_summary("Invalid URL:");
         let parsed = Url::parse(url)
