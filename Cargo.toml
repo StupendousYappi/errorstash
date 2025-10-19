@@ -1,0 +1,11 @@
+[package]
+name = "errorstash"
+version = "0.1.0"
+edition = "2021"
+description = "Tools for reporting multiple errors together"
+repository = "https://github.com/StupendousYappi/errorstash"
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
