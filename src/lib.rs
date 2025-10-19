@@ -98,8 +98,8 @@
 //!   provided stash.
 //! - [`or_fail(&mut stash)`][StashableResult::or_fail]: Converts a
 //!   `Result<T, E>` into a `Result<T, W>`, where `W` is the stash's
-//!    wrapper type and contains the current error and any errors
-//!    previously collected by the stash.
+//!   wrapper type and contains the current error and any errors
+//!   previously collected by the stash.
 //!
 //! The [`or_stash`][StashableResult::or_stash] method is useful when you want
 //! to continue processing after an error occurs to collect any additional

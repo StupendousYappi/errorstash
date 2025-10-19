@@ -309,7 +309,7 @@ where
 
     /// Adds an error and immediately returns `Err(W)` with all collected
     /// errors.
-    fn fail_now(&mut self, e: E) -> Result<(), W> {
+    pub fn fail_now(&mut self, e: E) -> Result<(), W> {
         self.mut_errors().push(e);
         let wrapper = self.consume();
         Err(wrapper)
@@ -402,7 +402,7 @@ where
 
     fn or_fail(self, stash: &mut TypedStash<E, W>) -> Result<T, W> {
         self.map_err(|e| {
-            stash.mut_errors().push(e.into());
+            stash.mut_errors().push(e);
             stash.consume()
         })
     }
@@ -426,7 +426,7 @@ where
         match self {
             Ok(v) => Some(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 None
             }
         }
@@ -436,7 +436,7 @@ where
         match self {
             Ok(v) => Ok(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 Err(stash.consume())
             }
         }
@@ -461,7 +461,7 @@ where
         match self {
             Ok(v) => Some(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 None
             }
         }
@@ -471,7 +471,7 @@ where
         match self {
             Ok(v) => Ok(v),
             Err(e) => {
-                stash.mut_errors().extend(e.into_iter());
+                stash.mut_errors().extend(e);
                 Err(stash.consume())
             }
         }

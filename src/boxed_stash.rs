@@ -158,7 +158,7 @@ pub type BoxedErrors = ErrorList<BoxedError>;
 /// - <error 2>
 /// - <error 3>
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BoxedStash {
     summary: ErrorSummary,
     errors: Vec<BoxedError>,
@@ -273,15 +273,6 @@ impl BoxedStash {
         self.mut_errors().push(e.into());
         let wrapper = self.consume();
         Err(wrapper)
-    }
-}
-
-impl Default for BoxedStash {
-    fn default() -> Self {
-        Self {
-            summary: ErrorSummary::default(),
-            errors: Vec::new(),
-        }
     }
 }
 
