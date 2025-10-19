@@ -13,9 +13,9 @@ use errorstash::{ErrorStash, BoxedStash, BoxedErrors, StashableResult};
 struct InvalidDomainError(String);
 
 #[derive(Debug, PartialEq, Eq)]
-struct TrustedUrl(String);
+struct TrustedUrl(Url);
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct UrlValidator(HashSet<String>);
 
 impl UrlValidator {
@@ -27,11 +27,10 @@ impl UrlValidator {
     /// so, returns it as a `TrustedUrl`.
     fn validate_url(&self, url: &str) -> Result<TrustedUrl, BoxedErrors> {
         let mut stash = BoxedStash::with_summary("Invalid URL:");
-        let parsed = Url::parse(url)
-            .or_fail(&mut stash)?;
+        let parsed = Url::parse(url).or_fail(&mut stash)?;
 
         stash
-            .check(parsed.scheme() == "https", "URL must use https schema")
+            .check(parsed.scheme() == "https", "URL must use https scheme")
             .check(parsed.port().is_none(), "URL must not specify a port");
         let raw_domain = parsed.host_str().unwrap_or_default();
         if raw_domain.is_empty() {
@@ -42,7 +41,7 @@ impl UrlValidator {
         }
         stash.fail_unless_empty()?;
 
-        let as_safe = TrustedUrl(url.into());
+        let as_safe = TrustedUrl(parsed);
         Ok(as_safe)
     }
 }
