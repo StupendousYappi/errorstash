@@ -325,34 +325,6 @@ where
     }
 }
 
-/// Adds the ability to stash errors from a Result whose error type is a
-/// Vec of the stash's child error type.
-// impl<T, W, E> StashableResult<T, E, W, TypedStash<E, W>> for Result<T, Vec<E>>
-// where
-//     E: Display + Debug + Send + 'static,
-//     W: Error + Send + 'static,
-// {
-//     fn or_stash(self, stash: &mut TypedStash<E, W>) -> Option<T> {
-//         match self {
-//             Ok(v) => Some(v),
-//             Err(e) => {
-//                 stash.mut_errors().extend(e.into_iter());
-//                 None
-//             }
-//         }
-//     }
-
-//     fn or_fail(self, stash: &mut TypedStash<E, W>) -> Result<T, W> {
-//         match self {
-//             Ok(v) => Ok(v),
-//             Err(e) => {
-//                 stash.mut_errors().extend(e.into_iter());
-//                 Err(stash.consume())
-//             }
-//         }
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -393,10 +365,7 @@ mod tests {
     #[test]
     fn display_with_count_replacement() {
         let errors: Vec<Box<dyn Error + Send + Sync + 'static>> = vec![
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "IO error occurred",
-            )),
+            Box::new(std::io::Error::other("IO error occurred")),
             Box::new(CustomError::B("Custom error B occurred".to_string())),
         ];
 
@@ -414,10 +383,7 @@ mod tests {
     #[test]
     fn display_without_count_replacement() {
         let errors: Vec<Box<dyn Error + Send + Sync + 'static>> = vec![
-            Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "IO error occurred",
-            )),
+            Box::new(std::io::Error::other("IO error occurred")),
             Box::new(CustomError::B("Custom error B occurred".to_string())),
         ];
 
@@ -432,7 +398,7 @@ mod tests {
 
     #[test]
     fn push_all_with_strs() {
-        let strs = vec!["error one", "error two", "error three"];
+        let strs = ["error one", "error two", "error three"];
         let mut stash = BoxedStash::new();
         stash.push_all(strs.iter().copied());
         let errors = stash.consume();
@@ -451,17 +417,14 @@ mod tests {
 
     #[test]
     fn summary_returns_raw_summary_without_placeholder() {
-        let errors: Vec<BoxedError> = vec![Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "IO error",
-        ))];
+        let errors: Vec<BoxedError> = vec![Box::new(std::io::Error::other("IO error"))];
         let error_list = BoxedErrors::new("Some summary text".into(), errors);
         assert_eq!("Some summary text", error_list.summary());
     }
 
     #[test]
     fn extend_with_str_iterator() {
-        let strs = vec!["error a", "error b", "error c"];
+        let strs = ["error a", "error b", "error c"];
         let mut stash = BoxedStash::new();
         stash.push("initial error");
         stash.extend(strs.iter().copied());
@@ -475,7 +438,7 @@ mod tests {
 
     #[test]
     fn push_all_with_str_iterator() {
-        let strs = vec!["error x", "error y", "error z"];
+        let strs = ["error x", "error y", "error z"];
         let mut stash = BoxedStash::new();
         stash.push("first error");
         stash.push_all(strs.iter().copied());

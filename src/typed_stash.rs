@@ -1312,7 +1312,7 @@ mod tests {
 
         // Borrow the inner ErrorList via downcast_ref to inspect it without
         // moving it out of the anyhow::Error (avoids size/coercion issues).
-        let recovered_ref = (&any_err).downcast_ref::<ErrorList<String>>();
+        let recovered_ref = (any_err).downcast_ref::<ErrorList<String>>();
         assert!(recovered_ref.is_some());
         let recovered = recovered_ref.unwrap();
         assert_eq!(recovered.len(), 2);
@@ -1348,7 +1348,7 @@ mod tests {
 
         // Borrow the inner ErrorList via downcast_ref to inspect it without
         // moving it out of the eyre::Report.
-        let recovered_ref = (&report).downcast_ref::<ErrorList<String>>();
+        let recovered_ref = (report).downcast_ref::<ErrorList<String>>();
         assert!(recovered_ref.is_some());
         let recovered = recovered_ref.unwrap();
         assert_eq!(recovered.len(), 2);
