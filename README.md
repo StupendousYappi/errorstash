@@ -6,7 +6,7 @@ A library for collecting multiple related errors, and reporting them together.
 use std::collections::HashSet;
 use url::Url;
 use thiserror::Error;
-use errorstash::{BoxedStash, BoxedErrors, OrStash};
+use errorstash::{ErrorStash, BoxedStash, BoxedErrors, StashableResult};
 
 #[derive(Error, Debug)]
 #[error("Domain '{0}' is not trusted")]
@@ -19,7 +19,7 @@ struct TrustedUrl(String);
 struct UrlValidator(HashSet<String>);
 
 impl UrlValidator {
-    fn new(trusted_domains: &[String]) -> Self {
+    fn new(trusted_domains: Vec<String>) -> Self {
         Self(trusted_domains.into_iter().collect())
     }
 
