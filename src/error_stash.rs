@@ -131,7 +131,11 @@ where
     /// any time with `?` to return from the function if any errors have been
     /// collected.
     fn ok(&self) -> Option<()> {
-        if self.is_empty() { Some(()) } else { None }
+        if self.is_empty() {
+            Some(())
+        } else {
+            None
+        }
     }
 
     /// If the condition is false, adds a formatted error to the stash. Otherwise,

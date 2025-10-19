@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-use crate::error_list::{DEFAULT_SUMMARY, ErrorList};
+use crate::error_list::{ErrorList, DEFAULT_SUMMARY};
 use crate::error_stash::ErrorStashInternal;
 use crate::{ErrorStash, StashableResult};
 
