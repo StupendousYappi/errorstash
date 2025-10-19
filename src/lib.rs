@@ -12,28 +12,28 @@
 //! use url::Url;
 //! use thiserror::Error;
 //! use errorstash::{ErrorStash, BoxedStash, BoxedErrors, StashableResult};
-//! 
+//!
 //! #[derive(Error, Debug)]
 //! #[error("Domain '{0}' is not trusted")]
 //! struct InvalidDomainError(String);
-//! 
+//!
 //! #[derive(Debug, PartialEq, Eq)]
 //! struct TrustedUrl(Url);
-//! 
+//!
 //! #[derive(Debug, Clone, PartialEq, Eq)]
 //! struct UrlValidator(HashSet<String>);
-//! 
+//!
 //! impl UrlValidator {
 //!     fn new(trusted_domains: Vec<String>) -> Self {
 //!         Self(trusted_domains.into_iter().collect())
 //!     }
-//! 
+//!
 //!     /// Validates that the given URL complies with our requirements, and if
 //!     /// so, returns it as a `TrustedUrl`.
 //!     fn validate_url(&self, url: &str) -> Result<TrustedUrl, BoxedErrors> {
 //!         let mut stash = BoxedStash::with_summary("Invalid URL:");
 //!         let parsed = Url::parse(url).or_fail(&mut stash)?;
-//! 
+//!
 //!         stash
 //!             .check(parsed.scheme() == "https", "URL must use https scheme")
 //!             .check(parsed.port().is_none(), "URL must not specify a port");
@@ -45,7 +45,7 @@
 //!             stash.push(e);
 //!         }
 //!         stash.fail_unless_empty()?;
-//! 
+//!
 //!         let as_safe = TrustedUrl(parsed);
 //!         Ok(as_safe)
 //!     }
