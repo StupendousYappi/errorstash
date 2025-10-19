@@ -18,9 +18,9 @@
 //! struct InvalidDomainError(String);
 //!
 //! #[derive(Debug, PartialEq, Eq)]
-//! struct TrustedUrl(String);
+//! struct TrustedUrl(Url);
 //!
-//! #[derive(Debug)]
+//! #[derive(Debug, Clone, PartialEq, Eq)]
 //! struct UrlValidator(HashSet<String>);
 //!
 //! impl UrlValidator {
@@ -29,14 +29,13 @@
 //!     }
 //!
 //!     /// Validates that the given URL complies with our requirements, and if
-//!     /// so, returns its domain as a `TrustedUrl`.
+//!     /// so, returns it as a `TrustedUrl`.
 //!     fn validate_url(&self, url: &str) -> Result<TrustedUrl, BoxedErrors> {
 //!         let mut stash = BoxedStash::with_summary("Invalid URL:");
-//!         let parsed = Url::parse(url)
-//!             .or_fail(&mut stash)?;
+//!         let parsed = Url::parse(url).or_fail(&mut stash)?;
 //!
 //!         stash
-//!             .check(parsed.scheme() == "https", "URL must use https schema")
+//!             .check(parsed.scheme() == "https", "URL must use https scheme")
 //!             .check(parsed.port().is_none(), "URL must not specify a port");
 //!         let raw_domain = parsed.host_str().unwrap_or_default();
 //!         if raw_domain.is_empty() {
@@ -47,7 +46,7 @@
 //!         }
 //!         stash.fail_unless_empty()?;
 //!
-//!         let as_safe = TrustedUrl(url.into());
+//!         let as_safe = TrustedUrl(parsed);
 //!         Ok(as_safe)
 //!     }
 //! }
@@ -55,7 +54,7 @@
 //! let validator = UrlValidator::new(vec!["example.com".to_string(), "rust-lang.org".to_string()]);
 //!
 //! let good = validator.validate_url("https://example.com/path").unwrap();
-//! assert_eq!(good.0, "https://example.com/path");
+//! assert_eq!("https://example.com/path", good.0.as_str());
 //!
 //! let bad = validator.validate_url("http://untrusted.com:8080/path");
 //! assert!(bad.is_err());
@@ -63,7 +62,7 @@
 //! assert_eq!(3, errors.len());
 //! let expected = "
 //! Invalid URL:
-//! - URL must use https schema
+//! - URL must use https scheme
 //! - URL must not specify a port
 //! - Domain 'untrusted.com' is not trusted
 //! ";
