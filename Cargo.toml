@@ -2,10 +2,17 @@
 name = "errorstash"
 version = "0.1.0"
 edition = "2021"
-description = "Tools for reporting multiple errors together"
+description = "A library for collecting multiple related errors, and reporting them together"
 repository = "https://github.com/StupendousYappi/errorstash"
 license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+
+[dev-dependencies]
+anyhow = "1.0.99"
+eyre = "0.6.12"
+test-log = "0.2.18"
+thiserror = "2.0.17"
+url = "2.5.7"
