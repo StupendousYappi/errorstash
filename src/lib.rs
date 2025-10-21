@@ -119,9 +119,9 @@
 //!   `Result<T, E>` into a `Result<T, W>`, where `W` is the stash's
 //!   wrapper type and contains the current error and any errors
 //!   previously collected by the stash.
-//! 
+//!
 //! ## or_stash example
-//! 
+//!
 //! ```
 //! use std::num::{ParseIntError};
 //! use errorstash::{TypedStash, StashableResult, ErrorList};
@@ -137,7 +137,7 @@
 //!
 //! let r1 = sum_strings("10", "20");
 //! let r2 = sum_strings("10", "foo");
-//! 
+//!
 //! assert_eq!(r1.unwrap(), 30);
 //! assert!(r2.is_err());
 //! let errors: ErrorList<ParseIntError> = r2.unwrap_err();
@@ -148,24 +148,24 @@
 //! As this example shows, when using [`or_stash`][StashableResult::or_stash], you
 //! should only unwrap the returned `Option` values after calling verifying
 //! that the stash is empty.
-//! 
+//!
 //! # Iterator integration
-//! 
+//!
 //! When processing many values using an iterator that produces `Result<T, E>` values,
 //! you can stash all the errors using the [`stash_errors`][StashErrorsIter::stash_errors] method
 //! of the [`StashErrorsIter`] extension trait:
-//! 
+//!
 //! ```
 //! use std::num::ParseIntError;
 //! use errorstash::{TypedStash, StashErrorsIter};
-//! 
+//!
 //! let inputs = vec!["42", "foo", "100", "bar"];
 //! let mut stash = TypedStash::with_summary("Failed to parse some numbers:");
 //! let numbers: Vec<i32> = inputs.into_iter()
 //!     .map(|s| s.parse::<i32>())
 //!     .stash_errors(&mut stash)
 //!     .collect();
-//! 
+//!
 //! assert_eq!(numbers, vec![42, 100]);
 //! let errors: ErrorList<ParseIntError> = stash.to_error().unwrap();
 //! assert_eq!(errors.len(), 2);
