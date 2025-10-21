@@ -69,6 +69,26 @@
 //! assert_eq!(expected.trim(), errors.to_string().trim());
 //! ```
 //!
+//! # Key features
+//!
+//! - Compatible with any error that implements [`std::error::Error`], including
+//!   errors created by [`anyhow`], [`thiserror`], [`eyre`].
+//! - Works with the `?` operator and standard `Result` types
+//!   - Supports easily adding errors from a `Result` via the [`or_stash`][StashableResult::or_stash]
+//!     and [`or_fail`][StashableResult::or_fail] extension trait methods.
+//! - Supports easily adding errors from a `Iterator<Result<T, E>>` via the
+//!   [`stash_errors`][StashErrorsIter::stash_errors] method.
+//! - Quick and easy aggregation of mixed error types via boxing and the [`BoxedStash`] type.
+//! - Aggregation of strongly-typed error values via the [`TypedStash`] type.
+//! - Fully custom wrapper error types can be produced via the [`TypedStash::with_constructor`]
+//!   function.
+//! - Simple customization of summary lines when using the builtin [`ErrorList`] type as your
+//!   wrapper type.
+//! - No dependencies other than `std`
+//!   - `nostd` support is not currently provided, but will be considered if there is demand.
+//!   - Tests validate compatibility with popular error handling crates, but the code doesn't depend
+//!     on them.
+//!
 //! # Stash types
 //!
 //! This crate provides two types of error stashes:

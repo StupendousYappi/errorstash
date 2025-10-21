@@ -1,3 +1,4 @@
+use std::any::{Any, TypeId};
 use std::error::Error;
 
 use crate::error_list::{ErrorList, ErrorSummary};
@@ -295,31 +296,72 @@ impl IntoIterator for BoxedStash {
     }
 }
 
-/// Adds the ability to stash errors from a Result whose error type can be converted
-/// into BoxedError.
+/// Lets you stash errors from a `Result<T, FE>` into a `BoxedStash`.
+///
+/// This implementation allows stashing errors from any error type `FE` that can be converted
+/// into a `BoxedError` using the `Into` trait.
+///
+/// If the result's error type `FE` is itself an `ErrorList<BoxedError>` (i.e.
+/// the error type produced by another `BoxedStash`), its errors will be
+/// unpacked and individually added to the target `BoxedStash` (rather than
+/// nesting the entire `ErrorList` as a single error). In this case, summary
+/// message from the source `ErrorList` will be discarded, and only its child
+/// errors retained.
 ///
 /// Note that this implementation leverages the [`Into<BoxedError>`] trait to auto-convert
 /// compatible error types into BoxedError. This behavior differs from the `StashableResult`
 /// implementation for `TypedStash`, which requires the error type to match exactly.
 impl<T, FE> StashableResult<T, BoxedError, ErrorList<BoxedError>, BoxedStash> for Result<T, FE>
 where
-    FE: Into<BoxedError>,
+    FE: Into<BoxedError> + Any,
 {
+    /// Consumes this `Result`, returning `Some(T)` if this result is ok, or
+    /// collecting the error into the provided `ErrorStash` and returning `None`
+    /// if this result is an error.
+    ///
+    /// If the error type `FE` is an `ErrorList<BoxedError>`, its individual errors
+    /// will be unpacked and added to the stash, rather than nesting the entire
+    /// `ErrorList` as a single error.
     fn or_stash(self, stash: &mut BoxedStash) -> Option<T> {
         match self {
             Ok(v) => Some(v),
             Err(e) => {
-                let e = e.into();
-                stash.mut_errors().push(e);
+                let boxed = e.into();
+                let type_id = TypeId::of::<FE>();
+                let error_list_id = TypeId::of::<ErrorList<BoxedError>>();
+                if type_id == error_list_id {
+                    let wrapper: Box<ErrorList<BoxedError>> = boxed
+                        .downcast()
+                        .expect("TypeId matched but downcast failed");
+                    stash.mut_errors().extend(*wrapper);
+                } else {
+                    stash.mut_errors().push(boxed);
+                }
                 None
             }
         }
     }
 
+    /// Consumes this `Result`, returning `Ok(T)` if this result is ok, or
+    /// collecting the error into the provided `ErrorStash` and returning the
+    /// aggregated errors in a `Err(W)` if this result is an error.
+    ///
+    /// If the error type `FE` is an `ErrorList<BoxedError>`, its individual errors
+    /// will be unpacked and added to the stash, rather than nesting the entire
+    /// `ErrorList` as a single error.
     fn or_fail(self, stash: &mut BoxedStash) -> Result<T, ErrorList<BoxedError>> {
         self.map_err(|e| {
-            let e = e.into();
-            stash.mut_errors().push(e);
+            let boxed = e.into();
+            let type_id = TypeId::of::<FE>();
+            let error_list_id = TypeId::of::<ErrorList<BoxedError>>();
+            if type_id == error_list_id {
+                let wrapper: Box<ErrorList<BoxedError>> = boxed
+                    .downcast()
+                    .expect("TypeId matched but downcast failed");
+                stash.mut_errors().extend(*wrapper);
+            } else {
+                stash.mut_errors().push(boxed);
+            }
             stash.consume()
         })
     }
@@ -490,5 +532,113 @@ mod tests {
             format_args!("value {} is not greater than 100", value),
         );
         assert_eq!(0, stash.len());
+    }
+
+    #[test]
+    fn or_stash_simple_error() {
+        let mut stash = BoxedStash::new();
+        let result: Result<i32, &str> = Err("an error occurred");
+        let value = result.or_stash(&mut stash);
+        assert!(value.is_none());
+        let errors = stash.consume();
+        assert_eq!(1, errors.len());
+        assert_eq!("an error occurred", errors[0].to_string());
+    }
+
+    #[test]
+    fn or_stash_simple_ok() {
+        let mut stash = BoxedStash::new();
+        let result: Result<i32, &str> = Ok(123);
+        let value = result.or_stash(&mut stash);
+        assert_eq!(Some(123), value);
+        assert_eq!(0, stash.len());
+    }
+
+    #[test]
+    fn or_stash_with_errorlist() {
+        let mut target_stash = BoxedStash::new();
+
+        // create a source ErrorList<BoxedError> with three child errors
+        let children: Vec<Box<dyn Error + Send + Sync + 'static>> = vec![
+            Box::new(std::io::Error::other("child one")),
+            "child two".into(),
+            Box::new(std::io::Error::other("child three")),
+        ];
+
+        let source_wrapper = BoxedErrors::new("source summary".into(), children);
+
+        // wrap it into an Err variant where the error type implements Into<BoxedError>
+        // Box<ErrorList<BoxedError>> implements Into<BoxedError> via Box<dyn Error>
+        let err_value: Result<i32, BoxedErrors> = Err(source_wrapper);
+
+        // consume with or_stash: should unpack the three child errors into target_stash
+        let value = err_value.or_stash(&mut target_stash);
+
+        // or_stash should return None and stash should now contain 3 errors
+        assert!(value.is_none());
+        assert_eq!(3, target_stash.len());
+        let errors = target_stash.consume();
+        assert_eq!(3, errors.len());
+        assert_eq!("child one", errors[0].to_string());
+        assert_eq!("child two", errors[1].to_string());
+        assert_eq!("child three", errors[2].to_string());
+    }
+
+    #[test]
+    fn or_fail_simple_error() {
+        let mut stash = BoxedStash::new();
+        stash.push("pre-existing error");
+
+        let result: Result<i32, &str> = Err("an error occurred");
+        let value = result.or_fail(&mut stash);
+
+        assert!(value.is_err());
+        let errors = value.unwrap_err();
+        assert_eq!(2, errors.len());
+        assert_eq!("pre-existing error", errors[0].to_string());
+        assert_eq!("an error occurred", errors[1].to_string());
+    }
+
+    #[test]
+    fn or_fail_simple_ok() {
+        let mut stash = BoxedStash::new();
+        stash.push("pre-existing error");
+
+        let result: Result<i32, &str> = Ok(123);
+        let value = result.or_fail(&mut stash);
+
+        assert!(value.is_ok());
+        assert_eq!(123, value.unwrap());
+        assert_eq!(1, stash.len());
+    }
+
+    #[test]
+    fn or_fail_with_errorlist() {
+        let mut target_stash = BoxedStash::new();
+        target_stash.push("pre-existing error");
+
+        // create a source ErrorList<BoxedError> with three child errors
+        let children: Vec<Box<dyn Error + Send + Sync + 'static>> = vec![
+            Box::new(std::io::Error::other("child one")),
+            "child two".into(),
+            Box::new(std::io::Error::other("child three")),
+        ];
+
+        let source_wrapper = BoxedErrors::new("source summary".into(), children);
+
+        // wrap it into an Err variant where the error type implements Into<BoxedError>
+        let err_value: Result<i32, BoxedErrors> = Err(source_wrapper);
+
+        // consume with or_fail: should unpack the three child errors into target_stash
+        let value = err_value.or_fail(&mut target_stash);
+
+        // or_fail should return Err with all four errors (1 pre-existing + 3 from source)
+        assert!(value.is_err());
+        let errors = value.unwrap_err();
+        assert_eq!(4, errors.len());
+        assert_eq!("pre-existing error", errors[0].to_string());
+        assert_eq!("child one", errors[1].to_string());
+        assert_eq!("child two", errors[2].to_string());
+        assert_eq!("child three", errors[3].to_string());
     }
 }

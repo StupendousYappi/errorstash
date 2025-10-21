@@ -141,11 +141,11 @@ where
     /// If the condition is false, adds a formatted error to the stash. Otherwise,
     /// does nothing.
     ///
-    /// This method is like [`check`], but allows you to provide a dynamically
-    /// generated error value via the `format_args!` macro, as long as this
-    /// stash's error type implements `From<String>`. This is always true for
-    /// [`BoxedStash`], but for [`TypedStash`] it depends on the error type
-    /// used.
+    /// This method is like [`check`][crate::BoxedStash::check], but allows you
+    /// to provide a dynamically generated error value via the [`format_args!`]
+    /// macro, as long as this stash's error type implements `From<String>`.
+    /// This is always true for [`BoxedStash`][crate::BoxedStash], but for
+    /// [`TypedStash`][crate::TypedStash] it depends on the error type used.
     ///
     /// For performance, the formatting is only evaluated if the condition is
     /// false.
