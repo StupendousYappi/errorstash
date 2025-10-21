@@ -124,7 +124,7 @@
 //!
 //! ```
 //! use std::num::{ParseIntError};
-//! use errorstash::{TypedStash, StashableResult, ErrorList};
+//! use errorstash::{ErrorStash, TypedStash, StashableResult, ErrorList};
 //!
 //! fn sum_strings(a: &str, b: &str) -> Result<i32, ErrorList<ParseIntError>> {
 //!     let mut stash = TypedStash::new();
@@ -157,7 +157,7 @@
 //!
 //! ```
 //! use std::num::ParseIntError;
-//! use errorstash::{TypedStash, StashErrorsIter};
+//! use errorstash::{ErrorStash, TypedStash, StashErrorsIter, ErrorList};
 //!
 //! let inputs = vec!["42", "foo", "100", "bar"];
 //! let mut stash = TypedStash::with_summary("Failed to parse some numbers:");
