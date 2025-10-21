@@ -100,8 +100,10 @@
 //!   wrapper error type.
 //!
 //! Both types of stashes implement the [`ErrorStash`] trait, which provides
-//! methods for adding errors to the stash, checking if any errors have been
-//! collected, and emitting the collected errors as a single error result.
+//! common methods for checking if any errors have been collected, and emitting
+//! the collected errors as a single error result.  All method that mutate the
+//! stash are defined on the implementation types (the method names for mutation
+//! methods are the same on both types, but not the type signatures).
 //!
 //! This crate provides its own error aggregation type, [`ErrorList`], but
 //! can also be used with your own error collection types via the
