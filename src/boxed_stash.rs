@@ -13,7 +13,7 @@ pub type BoxedError = Box<dyn Error + Send + Sync + 'static>;
 
 /// The wrapper error type produced by [`BoxedStash`].
 ///
-/// A type alias for [`ErrorList`] with [`BoxedError`] as the inner error type.
+/// A type alias for `ErrorList<BoxedError>`.
 pub type BoxedErrors = ErrorList<BoxedError>;
 
 /// An [`ErrorStash`] that produces an [`ErrorList`] containing boxed, potentially

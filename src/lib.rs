@@ -124,7 +124,7 @@
 //!
 //! ```
 //! use std::num::{ParseIntError};
-//! use errorstash::{ErrorStash, TypedStash, StashableResult, ErrorList};
+//! use errorstash::*;
 //!
 //! fn sum_strings(a: &str, b: &str) -> Result<i32, ErrorList<ParseIntError>> {
 //!     let mut stash = TypedStash::new();
