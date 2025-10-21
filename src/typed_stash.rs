@@ -835,11 +835,7 @@ mod tests {
             TypedStash::with_constructor(WrapperError::new);
 
         // create a source ErrorList<AppError> with three child errors
-        let children = vec![
-            oops!("child one"),
-            oops!("child two"),
-            oops!("child three"),
-        ];
+        let children = vec![oops!("child one"), oops!("child two"), oops!("child three")];
 
         let source_wrapper = ErrorList::new("source summary".into(), children);
 
@@ -863,11 +859,7 @@ mod tests {
             TypedStash::with_constructor(WrapperError::new);
 
         // create a source ErrorList<AppError> with three child errors
-        let children = vec![
-            oops!("child one"),
-            oops!("child two"),
-            oops!("child three"),
-        ];
+        let children = vec![oops!("child one"), oops!("child two"), oops!("child three")];
 
         // wrap it into an Err variant
         let err_value: Result<i32, Vec<AppError>> = Err(children);
@@ -885,10 +877,7 @@ mod tests {
     #[test]
     fn or_fail_with_error_list() {
         // create a source ErrorList<AppError> with three child errors
-        let children = vec![
-            oops!("child one"),
-            oops!("child two"),
-        ];
+        let children = vec![oops!("child one"), oops!("child two")];
 
         let source_wrapper = ErrorList::new("source summary".into(), children);
         // wrap it into an Err variant
@@ -913,10 +902,7 @@ mod tests {
     #[test]
     fn or_fail_with_vec() {
         // create a source ErrorList<AppError> with three child errors
-        let children = vec![
-            oops!("child one"),
-            oops!("child two"),
-        ];
+        let children = vec![oops!("child one"), oops!("child two")];
 
         // wrap it into an Err variant
         let err_value: Result<i32, Vec<AppError>> = Err(children);

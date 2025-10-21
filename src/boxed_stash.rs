@@ -297,10 +297,10 @@ impl IntoIterator for BoxedStash {
 }
 
 /// Lets you stash errors from a `Result<T, FE>` into a `BoxedStash`.
-/// 
+///
 /// This implementation allows stashing errors from any error type `FE` that can be converted
 /// into a `BoxedError` using the `Into` trait.
-/// 
+///
 /// If the result's error type `FE` is itself an `ErrorList<BoxedError>` (i.e.
 /// the error type produced by another `BoxedStash`), its errors will be
 /// unpacked and individually added to the target `BoxedStash` (rather than
@@ -318,7 +318,7 @@ where
     /// Consumes this `Result`, returning `Some(T)` if this result is ok, or
     /// collecting the error into the provided `ErrorStash` and returning `None`
     /// if this result is an error.
-    /// 
+    ///
     /// If the error type `FE` is an `ErrorList<BoxedError>`, its individual errors
     /// will be unpacked and added to the stash, rather than nesting the entire
     /// `ErrorList` as a single error.
@@ -330,7 +330,9 @@ where
                 let type_id = TypeId::of::<FE>();
                 let error_list_id = TypeId::of::<ErrorList<BoxedError>>();
                 if type_id == error_list_id {
-                    let wrapper: Box<ErrorList<BoxedError>> = boxed.downcast().expect("TypeId matched but downcast failed");
+                    let wrapper: Box<ErrorList<BoxedError>> = boxed
+                        .downcast()
+                        .expect("TypeId matched but downcast failed");
                     stash.mut_errors().extend(wrapper.into_iter());
                 } else {
                     stash.mut_errors().push(boxed);
@@ -343,7 +345,7 @@ where
     /// Consumes this `Result`, returning `Ok(T)` if this result is ok, or
     /// collecting the error into the provided `ErrorStash` and returning the
     /// aggregated errors in a `Err(W)` if this result is an error.
-    /// 
+    ///
     /// If the error type `FE` is an `ErrorList<BoxedError>`, its individual errors
     /// will be unpacked and added to the stash, rather than nesting the entire
     /// `ErrorList` as a single error.
@@ -353,7 +355,9 @@ where
             let type_id = TypeId::of::<FE>();
             let error_list_id = TypeId::of::<ErrorList<BoxedError>>();
             if type_id == error_list_id {
-                let wrapper: Box<ErrorList<BoxedError>> = boxed.downcast().expect("TypeId matched but downcast failed");
+                let wrapper: Box<ErrorList<BoxedError>> = boxed
+                    .downcast()
+                    .expect("TypeId matched but downcast failed");
                 stash.mut_errors().extend(wrapper.into_iter());
             } else {
                 stash.mut_errors().push(boxed);
