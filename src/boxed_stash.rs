@@ -333,7 +333,7 @@ where
                     let wrapper: Box<ErrorList<BoxedError>> = boxed
                         .downcast()
                         .expect("TypeId matched but downcast failed");
-                    stash.mut_errors().extend(wrapper.into_iter());
+                    stash.mut_errors().extend(*wrapper);
                 } else {
                     stash.mut_errors().push(boxed);
                 }
@@ -358,7 +358,7 @@ where
                 let wrapper: Box<ErrorList<BoxedError>> = boxed
                     .downcast()
                     .expect("TypeId matched but downcast failed");
-                stash.mut_errors().extend(wrapper.into_iter());
+                stash.mut_errors().extend(*wrapper);
             } else {
                 stash.mut_errors().push(boxed);
             }
