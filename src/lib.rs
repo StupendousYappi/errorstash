@@ -71,14 +71,14 @@
 //!
 //! # Key features
 //!
-//! - Compatible with any error that implements [`std::error::Error`], including
+//! - Compatible with any error type that implements [`std::error::Error`], including
 //!   errors created by [`anyhow`](https://docs.rs/anyhow/latest/anyhow/),
 //!   [`thiserror`](https://docs.rs/thiserror/latest/thiserror/), and
 //! [`eyre`](https://docs.rs/eyre/latest/eyre/).
 //! - Works with the `?` operator and standard `Result` types
 //! - Supports easily adding errors from a `Iterator<Result<T, E>>` via the
 //!   [`stash_errors`][StashErrorsIter::stash_errors] method.
-//! - Quick and easy aggregation of mixed error types via boxing and the [`BoxedStash`] type.
+//! - Easy aggregation of mixed error types via boxing and the [`BoxedStash`] type.
 //! - Aggregation of strongly-typed error values via the [`TypedStash`] type.
 //! - Fully custom wrapper error types can be produced via the [`TypedStash::with_constructor`]
 //!   function.
