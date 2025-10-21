@@ -157,7 +157,7 @@
 //!
 //! ```
 //! use std::num::ParseIntError;
-//! use errorstash::{ErrorStash, TypedStash, StashErrorsIter, ErrorList};
+//! use errorstash::*;
 //!
 //! let inputs = vec!["42", "foo", "100", "bar"];
 //! let mut stash = TypedStash::with_summary("Failed to parse some numbers:");
