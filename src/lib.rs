@@ -1,6 +1,6 @@
 //! Utilities for collecting multiple errors and emitting them as a single wrapper error.
 //!
-//! Error stashes are useful when you want to perform multiple operations that
+//! [Error stashes][ErrorStash] are useful when you want to perform multiple operations that
 //! may independently fail, and you want to collect all errors that occur and
 //! return them together, rather than failing fast on the first error. For
 //! example, when validating data, you may want to provide the caller with a
@@ -71,12 +71,14 @@
 //!
 //! # Key features
 //!
-//! - Compatible with any error that implements [`std::error::Error`], including
-//!   errors created by [`anyhow`], [`thiserror`], [`eyre`].
+//! - Compatible with any error type that implements [`std::error::Error`], including
+//!   errors created by [`anyhow`](https://docs.rs/anyhow/latest/anyhow/),
+//!   [`thiserror`](https://docs.rs/thiserror/latest/thiserror/), and
+//!   [`eyre`](https://docs.rs/eyre/latest/eyre/).
 //! - Works with the `?` operator and standard `Result` types
 //! - Supports easily adding errors from a `Iterator<Result<T, E>>` via the
 //!   [`stash_errors`][StashErrorsIter::stash_errors] method.
-//! - Quick and easy aggregation of mixed error types via boxing and the [`BoxedStash`] type.
+//! - Easy aggregation of mixed error types via boxing and the [`BoxedStash`] type.
 //! - Aggregation of strongly-typed error values via the [`TypedStash`] type.
 //! - Fully custom wrapper error types can be produced via the [`TypedStash::with_constructor`]
 //!   function.
@@ -98,8 +100,10 @@
 //!   wrapper error type.
 //!
 //! Both types of stashes implement the [`ErrorStash`] trait, which provides
-//! methods for adding errors to the stash, checking if any errors have been
-//! collected, and emitting the collected errors as a single error result.
+//! common methods for checking if any errors have been collected, and emitting
+//! the collected errors as a single error result.  All method that mutate the
+//! stash are defined on the implementation types (the method names for mutation
+//! methods are the same on both types, but not the type signatures).
 //!
 //! This crate provides its own error aggregation type, [`ErrorList`], but
 //! can also be used with your own error collection types via the
