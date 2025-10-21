@@ -233,7 +233,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// # use errorstash::{ErrorStash, StashableResult, BoxedErrors, BoxedStash};
+    /// # use errorstash::{ErrorStash, StashableResult, BoxedStash};
     /// use anyhow::{Error, anyhow};
     ///
     /// let mut stash = BoxedStash::new();
@@ -258,7 +258,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// # use errorstash::{ErrorStash, StashableResult, BoxedErrors, BoxedStash};
+    /// # use errorstash::{ErrorStash, StashableResult, BoxedStash};
     /// use anyhow::{Error, anyhow};
     ///
     /// let mut stash = BoxedStash::new();
@@ -290,7 +290,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// # use errorstash::{ErrorStash, StashableResult, BoxedErrors, BoxedStash};
+    /// # use errorstash::{ErrorStash, StashableResult, BoxedStash};
     /// use anyhow::{Error, anyhow};
     ///
     /// let mut stash = BoxedStash::new();
@@ -335,7 +335,7 @@ where
     ///
     /// # Example
     /// ```
-    /// use errorstash::{ErrorStash, StashErrorsIter, BoxedErrors, BoxedStash};
+    /// use errorstash::{ErrorStash, StashErrorsIter, BoxedStash};
     /// use anyhow::{Error, anyhow};
     ///
     /// let mut stash = BoxedStash::new();

@@ -11,7 +11,7 @@
 //! use std::collections::HashSet;
 //! use url::Url;
 //! use thiserror::Error;
-//! use errorstash::{ErrorStash, BoxedStash, BoxedErrors, StashableResult};
+//! use errorstash::{ErrorStash, BoxedStash, BoxedErrorList, StashableResult};
 //!
 //! #[derive(Error, Debug)]
 //! #[error("Domain '{0}' is not trusted")]
@@ -30,7 +30,7 @@
 //!
 //!     /// Validates that the given URL complies with our requirements, and if
 //!     /// so, returns it as a `TrustedUrl`.
-//!     fn validate_url(&self, url: &str) -> Result<TrustedUrl, BoxedErrors> {
+//!     fn validate_url(&self, url: &str) -> Result<TrustedUrl, BoxedErrorList> {
 //!         let mut stash = BoxedStash::with_summary("Invalid URL:");
 //!         let parsed = Url::parse(url).or_fail(&mut stash)?;
 //!
@@ -175,7 +175,7 @@ mod error_list;
 mod error_stash;
 mod typed_stash;
 
-pub use boxed_stash::{BoxedError, BoxedErrors, BoxedStash};
+pub use boxed_stash::{BoxedError, BoxedErrorList, BoxedStash};
 pub use error_list::ErrorList;
 pub use error_stash::{ErrorStash, StashErrorsIter, StashableResult};
 pub use typed_stash::TypedStash;

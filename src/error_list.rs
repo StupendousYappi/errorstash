@@ -196,7 +196,7 @@ impl<T> ErrorList<T>
 where
     T: Display + Debug,
 {
-    /// Creates a new BoxedErrors with the given summary line and list of errors.
+    /// Creates a new BoxedErrorList with the given summary line and list of errors.
     ///
     /// The summary line can contain the placeholder `{count}`, which will be
     /// replaced with the number of errors when formatted.

@@ -5,7 +5,7 @@ use crate::error_list::{ErrorList, ErrorSummary};
 use crate::error_stash::ErrorStashInternal;
 use crate::{ErrorStash, StashableResult};
 
-/// The child error type used by [`BoxedStash`] and [`BoxedErrors`].
+/// The child error type used by [`BoxedStash`] and [`BoxedErrorList`].
 ///
 /// This type is also used by the `anyhow` and `eyre` crates, allowing easy
 /// conversions between BoxedError and the errors used by those crates.
@@ -14,25 +14,25 @@ pub type BoxedError = Box<dyn Error + Send + Sync + 'static>;
 /// The wrapper error type produced by [`BoxedStash`].
 ///
 /// A type alias for `ErrorList<BoxedError>`.
-pub type BoxedErrors = ErrorList<BoxedError>;
+pub type BoxedErrorList = ErrorList<BoxedError>;
 
 /// An [`ErrorStash`] that produces an [`ErrorList`] containing boxed, potentially
 /// heterogeneous error values.
 ///
-/// BoxedErrors is designed to be a simple output type for [`ErrorStash`] when
+/// BoxedErrorList is designed to be a simple output type for [`ErrorStash`] when
 /// you want to collect multiple potential error types and report them together.
 ///
-/// An [`ErrorStash`] that produces BoxedErrors values can be created using
-/// the [`BoxedErrors::new_stash`] function.
+/// An [`ErrorStash`] that produces BoxedErrorList values can be created using
+/// the [`BoxedErrorList::new_stash`] function.
 ///
-/// The individual errors within a BoxedErrors will be instances of `Box<dyn
+/// The individual errors within a BoxedErrorList will be instances of `Box<dyn
 /// Error + Send + Sync + 'static>`, allowing most types that implements the
 /// `Error` trait to be stored. These values themselves implement the `Error` trait,
 /// and can be downcast back to their original types if needed.
 ///
 /// # Terminal methods
 ///
-/// Methods that can return a [`BoxedErrors`] (i.e. inside a `Result` or
+/// Methods that can return a [`BoxedErrorList`] (i.e. inside a `Result` or
 /// `Option`) are considered terminal methods, as they consume the collected
 /// errors to produce the wrapper error. In `BoxedStash`, these methods not only
 /// consume all collected errors, they also reset the stash's summary line to
@@ -55,14 +55,14 @@ pub type BoxedErrors = ErrorList<BoxedError>;
 /// # Compatibility
 ///
 /// The two error types encountered when using BoxedStash are the wrapper error type,
-/// [`BoxedErrors`], and the child error type, [`BoxedError`]. Both of these implement
+/// [`BoxedErrorList`], and the child error type, [`BoxedError`]. Both of these implement
 /// `std::error::Error + Send + Sync + 'static`, making them compatible with other popular
 /// error handling crates, including `anyhow`, `thiserror`, and `eyre`.
 ///
 /// ## anyhow example
 /// ```
 /// use anyhow::{Error, anyhow};
-/// # use errorstash::{ErrorStash, BoxedStash, BoxedErrors};
+/// # use errorstash::{ErrorStash, BoxedStash, BoxedErrorList};
 ///
 /// let mut stash = BoxedStash::new();
 /// stash.set_summary("Found {count} errors:");
@@ -71,13 +71,13 @@ pub type BoxedErrors = ErrorList<BoxedError>;
 ///
 /// let wrapper = stash.to_error().unwrap();
 /// let wrapper_as_anyhow: anyhow::Error = wrapper.into();
-/// let wrapper_back: BoxedErrors = wrapper_as_anyhow.downcast().unwrap();
+/// let wrapper_back: BoxedErrorList = wrapper_as_anyhow.downcast().unwrap();
 /// ```
 ///
 /// ## thiserror example
 /// ```
 /// use thiserror::Error;
-/// # use errorstash::{ErrorStash, BoxedStash, BoxedErrors};
+/// # use errorstash::{ErrorStash, BoxedStash, BoxedErrorList};
 ///
 /// #[derive(Debug, Error)]
 /// enum CustomChildError {
@@ -89,7 +89,7 @@ pub type BoxedErrors = ErrorList<BoxedError>;
 ///
 /// #[derive(Debug, Error)]
 /// #[error(transparent)]
-/// struct ValidationError(#[from] BoxedErrors);
+/// struct ValidationError(#[from] BoxedErrorList);
 ///
 /// let error = BoxedStash::new()
 ///     .set_summary("Found {count} errors:")
@@ -150,7 +150,7 @@ pub type BoxedErrors = ErrorList<BoxedError>;
 ///
 /// # Formatting
 ///
-/// The `std::fmt::Display` implementation for BoxedErrors prints them in this
+/// The `std::fmt::Display` implementation for BoxedErrorList prints them in this
 /// format:
 ///
 /// ```text
@@ -165,7 +165,7 @@ pub struct BoxedStash {
     errors: Vec<BoxedError>,
 }
 
-impl ErrorStashInternal<BoxedError, BoxedErrors> for BoxedStash {
+impl ErrorStashInternal<BoxedError, BoxedErrorList> for BoxedStash {
     fn errors(&self) -> &[BoxedError] {
         &self.errors
     }
@@ -174,19 +174,19 @@ impl ErrorStashInternal<BoxedError, BoxedErrors> for BoxedStash {
         &mut self.errors
     }
 
-    fn consume(&mut self) -> BoxedErrors {
+    fn consume(&mut self) -> BoxedErrorList {
         let errors = std::mem::take(&mut self.errors);
         let summary = std::mem::take(&mut self.summary).with_count(errors.len());
-        BoxedErrors::new(summary, errors)
+        BoxedErrorList::new(summary, errors)
     }
 }
 
-impl ErrorStash<BoxedError, BoxedErrors> for BoxedStash {
-    fn to_result<T>(mut self, closure: impl FnOnce() -> T) -> Result<T, BoxedErrors> {
+impl ErrorStash<BoxedError, BoxedErrorList> for BoxedStash {
+    fn to_result<T>(mut self, closure: impl FnOnce() -> T) -> Result<T, BoxedErrorList> {
         ErrorStashInternal::to_result(&mut self, closure)
     }
 
-    fn to_error(mut self) -> Option<BoxedErrors> {
+    fn to_error(mut self) -> Option<BoxedErrorList> {
         ErrorStashInternal::to_error(&mut self)
     }
 }
@@ -270,7 +270,7 @@ impl BoxedStash {
 
     /// Adds an error and immediately returns `Err(W)` with all collected
     /// errors.
-    pub fn fail_now(&mut self, e: impl Into<BoxedError>) -> Result<(), BoxedErrors> {
+    pub fn fail_now(&mut self, e: impl Into<BoxedError>) -> Result<(), BoxedErrorList> {
         self.mut_errors().push(e.into());
         let wrapper = self.consume();
         Err(wrapper)
@@ -411,7 +411,7 @@ mod tests {
             Box::new(CustomError::B("Custom error B occurred".to_string())),
         ];
 
-        let error_list = BoxedErrors::new(
+        let error_list = BoxedErrorList::new(
             "Multiple errors occurred: {count} issues found".into(),
             errors,
         );
@@ -429,7 +429,7 @@ mod tests {
             Box::new(CustomError::B("Custom error B occurred".to_string())),
         ];
 
-        let error_list = BoxedErrors::new("Some errors occurred".into(), errors);
+        let error_list = BoxedErrorList::new("Some errors occurred".into(), errors);
 
         let display_output = format!("{}", error_list);
 
@@ -453,14 +453,14 @@ mod tests {
     #[test]
     fn summary_returns_raw_summary_with_placeholder() {
         let errors: Vec<_> = vec!["first error".into(), "second error".into()];
-        let error_list = BoxedErrors::new("Found {count} problems".into(), errors);
+        let error_list = BoxedErrorList::new("Found {count} problems".into(), errors);
         assert_eq!("Found 2 problems", error_list.summary());
     }
 
     #[test]
     fn summary_returns_raw_summary_without_placeholder() {
         let errors: Vec<BoxedError> = vec![Box::new(std::io::Error::other("IO error"))];
-        let error_list = BoxedErrors::new("Some summary text".into(), errors);
+        let error_list = BoxedErrorList::new("Some summary text".into(), errors);
         assert_eq!("Some summary text", error_list.summary());
     }
 
@@ -565,11 +565,11 @@ mod tests {
             Box::new(std::io::Error::other("child three")),
         ];
 
-        let source_wrapper = BoxedErrors::new("source summary".into(), children);
+        let source_wrapper = BoxedErrorList::new("source summary".into(), children);
 
         // wrap it into an Err variant where the error type implements Into<BoxedError>
         // Box<ErrorList<BoxedError>> implements Into<BoxedError> via Box<dyn Error>
-        let err_value: Result<i32, BoxedErrors> = Err(source_wrapper);
+        let err_value: Result<i32, BoxedErrorList> = Err(source_wrapper);
 
         // consume with or_stash: should unpack the three child errors into target_stash
         let value = err_value.or_stash(&mut target_stash);
@@ -624,10 +624,10 @@ mod tests {
             Box::new(std::io::Error::other("child three")),
         ];
 
-        let source_wrapper = BoxedErrors::new("source summary".into(), children);
+        let source_wrapper = BoxedErrorList::new("source summary".into(), children);
 
         // wrap it into an Err variant where the error type implements Into<BoxedError>
-        let err_value: Result<i32, BoxedErrors> = Err(source_wrapper);
+        let err_value: Result<i32, BoxedErrorList> = Err(source_wrapper);
 
         // consume with or_fail: should unpack the three child errors into target_stash
         let value = err_value.or_fail(&mut target_stash);
