@@ -72,7 +72,9 @@
 //! # Key features
 //!
 //! - Compatible with any error that implements [`std::error::Error`], including
-//!   errors created by [`anyhow`], [`thiserror`], [`eyre`].
+//!   errors created by [`anyhow`](https://docs.rs/anyhow/latest/anyhow/),
+//!   [`thiserror`](https://docs.rs/thiserror/latest/thiserror/), and
+//! [`eyre`](https://docs.rs/eyre/latest/eyre/).
 //! - Works with the `?` operator and standard `Result` types
 //! - Supports easily adding errors from a `Iterator<Result<T, E>>` via the
 //!   [`stash_errors`][StashErrorsIter::stash_errors] method.
