@@ -74,8 +74,6 @@
 //! - Compatible with any error that implements [`std::error::Error`], including
 //!   errors created by [`anyhow`], [`thiserror`], [`eyre`].
 //! - Works with the `?` operator and standard `Result` types
-//!   - Supports easily adding errors from a `Result` via the [`or_stash`][StashableResult::or_stash]
-//!     and [`or_fail`][StashableResult::or_fail] extension trait methods.
 //! - Supports easily adding errors from a `Iterator<Result<T, E>>` via the
 //!   [`stash_errors`][StashErrorsIter::stash_errors] method.
 //! - Quick and easy aggregation of mixed error types via boxing and the [`BoxedStash`] type.
