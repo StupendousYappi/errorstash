@@ -75,7 +75,7 @@ where
 /// The terminal methods of error stashes are:
 /// - [`to_result`][ErrorStash::to_result]
 /// - [`to_error`][ErrorStash::to_error]
-/// - [`fail_now`][ErrorStash::fail_now]
+/// - [`fail_now`][crate::BoxedStash::fail_now]
 /// - [`fail_unless_empty`][ErrorStash::fail_unless_empty]
 ///
 /// These methods will reset the stash to an empty state if any errors were
@@ -84,7 +84,7 @@ where
 /// longer be needed. However, if you call a terminal method without `?`, be
 /// aware that following the call the stash will be empty- if it is a stash type
 /// that takes additional configuration, like the summary message in
-/// [`BoxedStash`], that configuration will also be reset to its default state.
+/// [`BoxedStash`][crate::BoxedStash], that configuration will also be reset to its default state.
 ///
 pub trait ErrorStash<E, W>: ErrorStashInternal<E, W>
 where

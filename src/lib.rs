@@ -1,6 +1,6 @@
 //! Utilities for collecting multiple errors and emitting them as a single wrapper error.
 //!
-//! Error stashes are useful when you want to perform multiple operations that
+//! [Error stashes][ErrorStash] are useful when you want to perform multiple operations that
 //! may independently fail, and you want to collect all errors that occur and
 //! return them together, rather than failing fast on the first error. For
 //! example, when validating data, you may want to provide the caller with a
