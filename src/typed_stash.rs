@@ -820,6 +820,124 @@ mod tests {
     }
 
     #[test]
+    fn or_stash_with_errorlist_ok() {
+        let mut stash: TypedStash<AppError, WrapperError> =
+            TypedStash::with_constructor(WrapperError::new);
+        let result: Result<i32, ErrorList<AppError>> = Ok(123);
+        let value = result.or_stash(&mut stash);
+        assert_eq!(Some(123), value);
+        assert_eq!(0, stash.len());
+    }
+
+    #[test]
+    fn or_stash_with_errorlist_multiple_children() {
+        let mut target_stash: TypedStash<AppError, WrapperError> =
+            TypedStash::with_constructor(WrapperError::new);
+
+        // create a source ErrorList<AppError> with three child errors
+        let children = vec![
+            oops!("child one"),
+            oops!("child two"),
+            oops!("child three"),
+        ];
+
+        let source_wrapper = ErrorList::new("source summary".into(), children);
+
+        // wrap it into an Err variant
+        let err_value: Result<i32, ErrorList<AppError>> = Err(source_wrapper);
+
+        // consume with or_stash: should unpack the three child errors into target_stash
+        let value = err_value.or_stash(&mut target_stash);
+
+        // or_stash should return None and stash should now contain 3 errors
+        assert!(value.is_none());
+        assert_eq!(3, target_stash.len());
+        assert_eq!("child one", target_stash.errors()[0].to_string());
+        assert_eq!("child two", target_stash.errors()[1].to_string());
+        assert_eq!("child three", target_stash.errors()[2].to_string());
+    }
+
+    #[test]
+    fn or_stash_with_vec() {
+        let mut target_stash: TypedStash<AppError, WrapperError> =
+            TypedStash::with_constructor(WrapperError::new);
+
+        // create a source ErrorList<AppError> with three child errors
+        let children = vec![
+            oops!("child one"),
+            oops!("child two"),
+            oops!("child three"),
+        ];
+
+        // wrap it into an Err variant
+        let err_value: Result<i32, Vec<AppError>> = Err(children);
+
+        // consume with or_stash: should unpack the three child errors into target_stash
+        let value = err_value.or_stash(&mut target_stash);
+
+        // or_stash should return None and stash should now contain 3 errors
+        assert!(value.is_none());
+        assert_eq!(3, target_stash.len());
+        assert_eq!("child one", target_stash.errors()[0].to_string());
+        assert_eq!("child two", target_stash.errors()[1].to_string());
+        assert_eq!("child three", target_stash.errors()[2].to_string());
+    }
+    #[test]
+    fn or_fail_with_error_list() {
+        // create a source ErrorList<AppError> with three child errors
+        let children = vec![
+            oops!("child one"),
+            oops!("child two"),
+        ];
+
+        let source_wrapper = ErrorList::new("source summary".into(), children);
+        // wrap it into an Err variant
+        let err_value: Result<i32, ErrorList<AppError>> = Err(source_wrapper);
+
+        let mut target_stash: TypedStash<AppError, WrapperError> =
+            TypedStash::with_constructor(WrapperError::new);
+        target_stash.push(oops!("prior error"));
+
+        // consume with or_stash: should unpack the three child errors into target_stash
+        let value = err_value.or_fail(&mut target_stash);
+
+        // or_stash should return None and stash should now contain 3 errors
+        assert!(value.is_err());
+        let errors = value.unwrap_err().errors;
+        assert_eq!(3, errors.len());
+        assert_eq!("prior error", errors[0].to_string());
+        assert_eq!("child one", errors[1].to_string());
+        assert_eq!("child two", errors[2].to_string());
+    }
+
+    #[test]
+    fn or_fail_with_vec() {
+        // create a source ErrorList<AppError> with three child errors
+        let children = vec![
+            oops!("child one"),
+            oops!("child two"),
+        ];
+
+        // wrap it into an Err variant
+        let err_value: Result<i32, Vec<AppError>> = Err(children);
+
+        let mut target_stash: TypedStash<AppError, WrapperError> =
+            TypedStash::with_constructor(WrapperError::new);
+        target_stash.push(oops!("prior error"));
+
+        // consume with or_stash: should unpack the three child errors into target_stash
+        let value = err_value.or_fail(&mut target_stash);
+
+        // or_stash should return None and stash should now contain 3 errors
+        assert!(value.is_err());
+        let errors = value.unwrap_err().errors;
+        assert_eq!(3, errors.len());
+        assert_eq!("prior error", errors[0].to_string());
+        assert_eq!("child one", errors[1].to_string());
+        assert_eq!("child two", errors[2].to_string());
+    }
+
+    #[test]
     fn or_fail_ok_when_stash_has_prior_errors() {
         // Create a TypedStash that produces WrapperError from AppError (CustomError)
         let mut stash: TypedStash<AppError, WrapperError> =
