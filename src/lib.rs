@@ -1,7 +1,7 @@
 //! Utilities for collecting multiple errors and emitting them as a single wrapper error.
 //!
-//! [Error stashes][ErrorStash] are useful when you want to perform multiple operations that
-//! may independently fail, and you want to collect all errors that occur and
+//! Error stashes are useful when you want to perform multiple operations that
+//! may independently fail and you want to collect all errors that occur and
 //! return them together, rather than failing fast on the first error. For
 //! example, when validating data, you may want to provide the caller with a
 //! complete list of validation errors so that they can fix them all at once.
@@ -76,12 +76,12 @@
 //!   [`thiserror`](https://docs.rs/thiserror/latest/thiserror/), and
 //!   [`eyre`](https://docs.rs/eyre/latest/eyre/).
 //! - Works with the `?` operator and standard `Result` types
-//! - Supports easily adding errors from a `Iterator<Result<T, E>>` via the
-//!   [`stash_errors`][StashErrorsIter::stash_errors] method.
-//! - Easy aggregation of mixed error types via boxing and the [`BoxedStash`] type.
-//! - Aggregation of strongly-typed error values via the [`TypedStash`] type.
+//! - Allows aggregation of heterogeneous error types the [`BoxedStash`] type.
+//! - Allows aggregation of fixed type error values via the [`TypedStash`] type.
 //! - Fully custom wrapper error types can be produced via the [`TypedStash::with_constructor`]
 //!   function.
+//! - Supports easily adding errors from a `Iterator<Result<T, E>>` via the
+//!   [`stash_errors`][StashErrorsIter::stash_errors] method.
 //! - Simple customization of summary lines when using the builtin [`ErrorList`] type as your
 //!   wrapper type.
 //! - No dependencies other than `std`
@@ -105,7 +105,7 @@
 //! stash are defined on the implementation types (the method names for mutation
 //! methods are the same on both types, but not the type signatures).
 //!
-//! This crate provides its own error aggregation type, [`ErrorList`], but
+//! This crate provides a builtin error aggregation type, [`ErrorList`], but
 //! can also be used with your own error collection types via the
 //! [`TypedStash::with_constructor`] function.
 //!
@@ -148,7 +148,7 @@
 //! ```
 //!
 //! As this example shows, when using [`or_stash`][StashableResult::or_stash], you
-//! should only unwrap the returned `Option` values after calling verifying
+//! should only unwrap the returned `Option` values after verifying
 //! that the stash is empty.
 //!
 //! # Iterator integration
