@@ -71,7 +71,7 @@
 //!
 //! # Key features
 //!
-//! - Compatible with any error type that implements [`std::error::Error`], including
+//! - Compatible with any error type that implements [`core::error::Error`], including
 //!   errors created by [`anyhow`](https://docs.rs/anyhow/latest/anyhow/),
 //!   [`thiserror`](https://docs.rs/thiserror/latest/thiserror/), and
 //!   [`eyre`](https://docs.rs/eyre/latest/eyre/).
@@ -93,7 +93,7 @@
 //!
 //! This crate provides two types of error stashes:
 //! - [`BoxedStash`]: A dynamically typed stash that can collect errors of any
-//!   type that implements `std::error::Error + Send + Sync + 'static`, and
+//!   type that implements `core::error::Error + Send + Sync + 'static`, and
 //!   wraps them in an [`ErrorList`].
 //! - [`TypedStash`]: An error stash with generic type parameters that collects
 //!   a specific type of child error and can emit them in a user-defined
@@ -176,6 +176,7 @@ mod boxed_stash;
 mod error_list;
 mod error_stash;
 mod typed_stash;
+mod string_stash;
 
 pub use boxed_stash::{BoxedError, BoxedErrorList, BoxedStash};
 pub use error_list::ErrorList;

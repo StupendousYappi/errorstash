@@ -1,4 +1,4 @@
-use std::error::Error;
+use core::error::Error;
 use std::fmt::{Debug, Display};
 
 /// An internal trait for methods that default methods in the main
@@ -61,7 +61,7 @@ where
 /// failing fast on the first error.
 ///
 /// `E` is the child error type that implements `std::fmt::Debug`.
-/// `W` is the wrapper error type that implements `std::error::Error`.
+/// `W` is the wrapper error type that implements `core::error::Error`.
 ///
 /// ## Terminal methods
 ///

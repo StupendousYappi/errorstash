@@ -1,4 +1,4 @@
-use std::error::Error;
+use core::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
 use crate::error_list::{ErrorList, DEFAULT_SUMMARY};
@@ -73,7 +73,7 @@ where
 ///
 /// # Generic types
 ///
-/// `W` is the wrapper error type that must implement [`std::error::Error`].
+/// `W` is the wrapper error type that must implement [`core::error::Error`].
 /// `E` is the child error type that must implement [`std::fmt::Display`] and [`std::fmt::Debug`].
 pub struct TypedStash<E, W>
 where
@@ -502,7 +502,7 @@ mod tests {
         }
     }
 
-    impl std::error::Error for CustomError {}
+    impl core::error::Error for CustomError {}
 
     macro_rules! oops {
         ($fmt:literal $(, $args:expr)* $(,)?) => {
@@ -532,7 +532,7 @@ mod tests {
         }
     }
 
-    impl std::error::Error for StringErrorWrapper {}
+    impl core::error::Error for StringErrorWrapper {}
 
     impl StringErrorWrapper {
         fn new(errors: Vec<String>) -> Self {
@@ -569,7 +569,7 @@ mod tests {
         }
     }
 
-    impl std::error::Error for WrapperError {}
+    impl core::error::Error for WrapperError {}
 
     #[test]
     fn returns_ok_when_no_errors() {
