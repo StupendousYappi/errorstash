@@ -17,6 +17,6 @@ exclude = [".*"]
 [dev-dependencies]
 anyhow = "1.0.99"
 eyre = "0.6.12"
-test-log = "0.2.18"
+test-log = "0.2.19"
 thiserror = "2.0.17"
 url = "2.5.7"
