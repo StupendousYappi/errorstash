@@ -1,5 +1,5 @@
 use std::any::{Any, TypeId};
-use core::error::Error;
+use std::error::Error;
 
 use crate::error_list::{ErrorList, ErrorSummary};
 use crate::error_stash::ErrorStashInternal;
@@ -56,7 +56,7 @@ pub type BoxedErrorList = ErrorList<BoxedError>;
 ///
 /// The two error types encountered when using BoxedStash are the wrapper error type,
 /// [`BoxedErrorList`], and the child error type, [`BoxedError`]. Both of these implement
-/// `core::error::Error + Send + Sync + 'static`, making them compatible with other popular
+/// `std::error::Error + Send + Sync + 'static`, making them compatible with other popular
 /// error handling crates, including `anyhow`, `thiserror`, and `eyre`.
 ///
 /// ## anyhow example
