@@ -91,13 +91,16 @@
 //!
 //! # Stash types
 //!
-//! This crate provides two types of error stashes:
+//! This crate provides three types of error stashes:
 //! - [`BoxedStash`]: A dynamically typed stash that can collect errors of any
 //!   type that implements `std::error::Error + Send + Sync + 'static`, and
 //!   wraps them in an [`ErrorList`].
 //! - [`TypedStash`]: An error stash with generic type parameters that collects
 //!   a specific type of child error and can emit them in a user-defined
 //!   wrapper error type.
+//! - [`StringStash`]: An error stash that collects anything that implements
+//!   `Display` and stores it as a `String` at add time, wrapping them in an
+//!   [`ErrorList<String>`].
 //!
 //! Both types of stashes implement the [`ErrorStash`] trait, which provides
 //! common methods for checking if any errors have been collected, and emitting
@@ -176,8 +179,10 @@ mod boxed_stash;
 mod error_list;
 mod error_stash;
 mod typed_stash;
+mod string_stash;
 
 pub use boxed_stash::{BoxedError, BoxedErrorList, BoxedStash};
 pub use error_list::ErrorList;
 pub use error_stash::{ErrorStash, StashErrorsIter, StashableResult};
 pub use typed_stash::TypedStash;
+pub use string_stash::StringStash;
