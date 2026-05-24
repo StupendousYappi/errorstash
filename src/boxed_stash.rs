@@ -200,10 +200,7 @@ impl BoxedStash {
     /// Creates a new BoxedStash with the given summary line.
     pub fn with_summary(summary: &'static str) -> Self {
         let summary = ErrorSummary::new_static(summary);
-        Self {
-            summary,
-            errors: Vec::new(),
-        }
+        Self { summary, errors: Vec::new() }
     }
 
     /// Sets a custom summary line for the wrapper error.
@@ -330,9 +327,8 @@ where
                 let type_id = TypeId::of::<FE>();
                 let error_list_id = TypeId::of::<ErrorList<BoxedError>>();
                 if type_id == error_list_id {
-                    let wrapper: Box<ErrorList<BoxedError>> = boxed
-                        .downcast()
-                        .expect("TypeId matched but downcast failed");
+                    let wrapper: Box<ErrorList<BoxedError>> =
+                        boxed.downcast().expect("TypeId matched but downcast failed");
                     stash.mut_errors().extend(*wrapper);
                 } else {
                     stash.mut_errors().push(boxed);
@@ -355,9 +351,8 @@ where
             let type_id = TypeId::of::<FE>();
             let error_list_id = TypeId::of::<ErrorList<BoxedError>>();
             if type_id == error_list_id {
-                let wrapper: Box<ErrorList<BoxedError>> = boxed
-                    .downcast()
-                    .expect("TypeId matched but downcast failed");
+                let wrapper: Box<ErrorList<BoxedError>> =
+                    boxed.downcast().expect("TypeId matched but downcast failed");
                 stash.mut_errors().extend(*wrapper);
             } else {
                 stash.mut_errors().push(boxed);
@@ -411,10 +406,8 @@ mod tests {
             Box::new(CustomError::B("Custom error B occurred".to_string())),
         ];
 
-        let error_list = BoxedErrorList::new(
-            "Multiple errors occurred: {count} issues found".into(),
-            errors,
-        );
+        let error_list =
+            BoxedErrorList::new("Multiple errors occurred: {count} issues found".into(), errors);
 
         let display_output = format!("{}", error_list);
 
@@ -513,10 +506,7 @@ mod tests {
         let mut stash = BoxedStash::new();
         let value = 42;
         // condition is false, so the formatted message should be pushed
-        stash.check_fmt(
-            value > 100,
-            format_args!("value {} is not greater than 100", value),
-        );
+        stash.check_fmt(value > 100, format_args!("value {} is not greater than 100", value));
         let errors = stash.consume();
         assert_eq!(1, errors.len());
         assert_eq!("value 42 is not greater than 100", errors[0].to_string());
@@ -527,10 +517,7 @@ mod tests {
         let mut stash = BoxedStash::new();
         let value = 200;
         // condition is true, so no error should be added
-        stash.check_fmt(
-            value > 100,
-            format_args!("value {} is not greater than 100", value),
-        );
+        stash.check_fmt(value > 100, format_args!("value {} is not greater than 100", value));
         assert_eq!(0, stash.len());
     }
 
