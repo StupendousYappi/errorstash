@@ -178,11 +178,11 @@
 mod boxed_stash;
 mod error_list;
 mod error_stash;
-mod typed_stash;
 mod string_stash;
+mod typed_stash;
 
 pub use boxed_stash::{BoxedError, BoxedErrorList, BoxedStash};
 pub use error_list::ErrorList;
 pub use error_stash::{ErrorStash, StashErrorsIter, StashableResult};
+pub use string_stash::{StringError, StringStash};
 pub use typed_stash::TypedStash;
-pub use string_stash::{StringStash, StringError};

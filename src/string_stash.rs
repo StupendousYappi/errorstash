@@ -186,7 +186,8 @@ impl StringStash {
         It: IntoIterator<Item = T>,
         T: Display,
     {
-        self.mut_errors().extend(errors.into_iter().map(|e| StringError(e.to_string())));
+        self.mut_errors()
+            .extend(errors.into_iter().map(|e| StringError(e.to_string())));
         self
     }
 
@@ -222,7 +223,8 @@ where
     T: Display,
 {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        self.errors.extend(iter.into_iter().map(|t| StringError(t.to_string())));
+        self.errors
+            .extend(iter.into_iter().map(|t| StringError(t.to_string())));
     }
 }
 
@@ -235,13 +237,13 @@ impl IntoIterator for StringStash {
     }
 }
 
-use std::any::{Any, TypeId};
 use crate::boxed_stash::BoxedError;
+use std::any::{Any, TypeId};
 
 /// Allows stashing errors from ANY result error type that implements `std::fmt::Display` into a `StringStash`.
 ///
-/// If the error type is an `ErrorList<StringError>` or `ErrorList<BoxedError>`, it will be unpacked 
-/// and its individual child errors will be stashed separately as `StringError`s, maintaining proper 
+/// If the error type is an `ErrorList<StringError>` or `ErrorList<BoxedError>`, it will be unpacked
+/// and its individual child errors will be stashed separately as `StringError`s, maintaining proper
 /// multi-error formatting.
 impl<T, FE> StashableResult<T, StringError, ErrorList<StringError>, StringStash> for Result<T, FE>
 where
@@ -264,9 +266,9 @@ where
                     let wrapper = any_ref
                         .downcast_ref::<ErrorList<BoxedError>>()
                         .expect("TypeId matched but downcast failed");
-                    stash.mut_errors().extend(
-                        wrapper.iter().map(|err| StringError(err.to_string()))
-                    );
+                    stash
+                        .mut_errors()
+                        .extend(wrapper.iter().map(|err| StringError(err.to_string())));
                 } else {
                     stash.mut_errors().push(StringError(e.to_string()));
                 }
@@ -290,9 +292,9 @@ where
                 let wrapper = any_ref
                     .downcast_ref::<ErrorList<BoxedError>>()
                     .expect("TypeId matched but downcast failed");
-                stash.mut_errors().extend(
-                    wrapper.iter().map(|err| StringError(err.to_string()))
-                );
+                stash
+                    .mut_errors()
+                    .extend(wrapper.iter().map(|err| StringError(err.to_string())));
             } else {
                 stash.mut_errors().push(StringError(e.to_string()));
             }
@@ -300,7 +302,6 @@ where
         })
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -374,7 +375,13 @@ mod tests {
         stash.extend(vec!["error 1", "error 2"]);
         assert_eq!(stash.len(), 2);
         let collected: Vec<StringError> = stash.into_iter().collect();
-        assert_eq!(collected, vec![StringError("error 1".to_string()), StringError("error 2".to_string())]);
+        assert_eq!(
+            collected,
+            vec![
+                StringError("error 1".to_string()),
+                StringError("error 2".to_string())
+            ]
+        );
     }
 
     #[test]
@@ -400,7 +407,13 @@ mod tests {
     #[test]
     fn or_stash_with_errorlist() {
         let mut target_stash = StringStash::new();
-        let source_errors = ErrorList::new("summary".into(), vec![StringError("error A".to_string()), StringError("error B".to_string())]);
+        let source_errors = ErrorList::new(
+            "summary".into(),
+            vec![
+                StringError("error A".to_string()),
+                StringError("error B".to_string()),
+            ],
+        );
         let err_value: Result<i32, ErrorList<StringError>> = Err(source_errors);
 
         let value = err_value.or_stash(&mut target_stash);
