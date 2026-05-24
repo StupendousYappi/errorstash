@@ -99,8 +99,8 @@
 //!   a specific type of child error and can emit them in a user-defined
 //!   wrapper error type.
 //! - [`StringStash`]: An error stash that collects anything that implements
-//!   `Display` and stores it as a `String` at add time, wrapping them in an
-//!   [`ErrorList<String>`].
+//!   `Display` and stores it as a `StringError` at add time, wrapping them in an
+//!   [`ErrorList<StringError>`].
 //!
 //! Both types of stashes implement the [`ErrorStash`] trait, which provides
 //! common methods for checking if any errors have been collected, and emitting
@@ -185,4 +185,4 @@ pub use boxed_stash::{BoxedError, BoxedErrorList, BoxedStash};
 pub use error_list::ErrorList;
 pub use error_stash::{ErrorStash, StashErrorsIter, StashableResult};
 pub use typed_stash::TypedStash;
-pub use string_stash::StringStash;
+pub use string_stash::{StringStash, StringError};

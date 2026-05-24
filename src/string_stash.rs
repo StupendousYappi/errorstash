@@ -4,10 +4,77 @@ use crate::error_list::{ErrorList, ErrorSummary};
 use crate::error_stash::ErrorStashInternal;
 use crate::{ErrorStash, StashableResult};
 
-/// An [`ErrorStash`] that accepts anything that implements [`Display`]
-/// and stores it as a [`String`].
+/// A simple wrapper around [`String`] that implements [`std::error::Error`].
 ///
-/// It produces an [`ErrorList<String>`] if any errors are collected.
+/// This type allows `StringStash` to collect errors that implement the `Error` trait,
+/// while maintaining string-based error handling.
+#[derive(Clone, PartialEq, Eq)]
+pub struct StringError(pub String);
+
+impl std::ops::Deref for StringError {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Display for StringError {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.0, f)
+    }
+}
+
+impl Debug for StringError {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self.0, f)
+    }
+}
+
+impl std::error::Error for StringError {}
+
+impl From<String> for StringError {
+    #[inline]
+    fn from(s: String) -> Self {
+        Self(s)
+    }
+}
+
+impl From<&str> for StringError {
+    #[inline]
+    fn from(s: &str) -> Self {
+        Self(s.to_string())
+    }
+}
+
+impl From<StringError> for String {
+    #[inline]
+    fn from(err: StringError) -> Self {
+        err.0
+    }
+}
+
+impl PartialEq<str> for StringError {
+    #[inline]
+    fn eq(&self, other: &str) -> bool {
+        self.0 == other
+    }
+}
+
+impl PartialEq<&str> for StringError {
+    #[inline]
+    fn eq(&self, other: &&str) -> bool {
+        self.0 == *other
+    }
+}
+
+/// An [`ErrorStash`] that accepts anything that implements [`Display`]
+/// and stores it as a [`StringError`].
+///
+/// It produces an [`ErrorList<StringError>`] if any errors are collected.
 ///
 /// `StringStash` is useful when you want to collect arbitrary error messages
 /// or formatted text as strings, without needing them to implement the `Error` trait,
@@ -15,7 +82,7 @@ use crate::{ErrorStash, StashableResult};
 ///
 /// # Terminal methods
 ///
-/// Methods that can return an [`ErrorList<String>`] (i.e. inside a `Result` or
+/// Methods that can return an [`ErrorList<StringError>`] (i.e. inside a `Result` or
 /// `Option`) are considered terminal methods, as they consume the collected
 /// errors to produce the wrapper error. In `StringStash`, these methods not only
 /// consume all collected errors, they also reset the stash's summary line to
@@ -36,31 +103,31 @@ use crate::{ErrorStash, StashableResult};
 #[derive(Debug, Default)]
 pub struct StringStash {
     summary: ErrorSummary,
-    errors: Vec<String>,
+    errors: Vec<StringError>,
 }
 
-impl ErrorStashInternal<String, ErrorList<String>> for StringStash {
-    fn errors(&self) -> &[String] {
+impl ErrorStashInternal<StringError, ErrorList<StringError>> for StringStash {
+    fn errors(&self) -> &[StringError] {
         &self.errors
     }
 
-    fn mut_errors(&mut self) -> &mut Vec<String> {
+    fn mut_errors(&mut self) -> &mut Vec<StringError> {
         &mut self.errors
     }
 
-    fn consume(&mut self) -> ErrorList<String> {
+    fn consume(&mut self) -> ErrorList<StringError> {
         let errors = std::mem::take(&mut self.errors);
         let summary = std::mem::take(&mut self.summary).with_count(errors.len());
         ErrorList::new(summary, errors)
     }
 }
 
-impl ErrorStash<String, ErrorList<String>> for StringStash {
-    fn to_result<T>(mut self, closure: impl FnOnce() -> T) -> Result<T, ErrorList<String>> {
+impl ErrorStash<StringError, ErrorList<StringError>> for StringStash {
+    fn to_result<T>(mut self, closure: impl FnOnce() -> T) -> Result<T, ErrorList<StringError>> {
         ErrorStashInternal::to_result(&mut self, closure)
     }
 
-    fn to_error(mut self) -> Option<ErrorList<String>> {
+    fn to_error(mut self) -> Option<ErrorList<StringError>> {
         ErrorStashInternal::to_error(&mut self)
     }
 }
@@ -107,19 +174,19 @@ impl StringStash {
         self
     }
 
-    /// Adds a child error to the stash, converting it to a string.
+    /// Adds a child error to the stash, converting it to a StringError.
     pub fn push(&mut self, err: impl Display) -> &mut Self {
-        self.mut_errors().push(err.to_string());
+        self.mut_errors().push(StringError(err.to_string()));
         self
     }
 
-    /// Adds multiple child errors to the stash, converting them to strings.
+    /// Adds multiple child errors to the stash, converting them to StringErrors.
     pub fn push_all<T, It>(&mut self, errors: It) -> &mut Self
     where
         It: IntoIterator<Item = T>,
         T: Display,
     {
-        self.mut_errors().extend(errors.into_iter().map(|e| e.to_string()));
+        self.mut_errors().extend(errors.into_iter().map(|e| StringError(e.to_string())));
         self
     }
 
@@ -130,15 +197,15 @@ impl StringStash {
     /// chain a call to [`fail_unless_empty`][ErrorStash::fail_unless_empty] after this method.
     pub fn check(&mut self, condition: bool, e: impl Display) -> &mut Self {
         if !condition {
-            self.mut_errors().push(e.to_string());
+            self.mut_errors().push(StringError(e.to_string()));
         }
         self
     }
 
-    /// Adds an error and immediately returns `Err(ErrorList<String>)` with all collected
+    /// Adds an error and immediately returns `Err(ErrorList<StringError>)` with all collected
     /// errors.
-    pub fn fail_now(&mut self, e: impl Display) -> Result<(), ErrorList<String>> {
-        self.mut_errors().push(e.to_string());
+    pub fn fail_now(&mut self, e: impl Display) -> Result<(), ErrorList<StringError>> {
+        self.mut_errors().push(StringError(e.to_string()));
         let wrapper = self.consume();
         Err(wrapper)
     }
@@ -155,106 +222,85 @@ where
     T: Display,
 {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        self.errors.extend(iter.into_iter().map(|t| t.to_string()));
+        self.errors.extend(iter.into_iter().map(|t| StringError(t.to_string())));
     }
 }
 
 impl IntoIterator for StringStash {
-    type Item = String;
-    type IntoIter = std::vec::IntoIter<String>;
+    type Item = StringError;
+    type IntoIter = std::vec::IntoIter<StringError>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.errors.into_iter()
     }
 }
 
-/// Allows stashing errors from a `Result<T, String>` into a `StringStash`.
-impl<T> StashableResult<T, String, ErrorList<String>, StringStash> for Result<T, String> {
-    fn or_stash(self, stash: &mut StringStash) -> Option<T> {
-        match self {
-            Ok(v) => Some(v),
-            Err(e) => {
-                stash.mut_errors().push(e);
-                None
-            }
-        }
-    }
+use std::any::{Any, TypeId};
+use crate::boxed_stash::BoxedError;
 
-    fn or_fail(self, stash: &mut StringStash) -> Result<T, ErrorList<String>> {
-        self.map_err(|e| {
-            stash.mut_errors().push(e);
-            stash.consume()
-        })
-    }
-}
-
-/// Allows stashing errors from a `Result<T, &str>` into a `StringStash`.
-impl<'a, T> StashableResult<T, String, ErrorList<String>, StringStash> for Result<T, &'a str> {
-    fn or_stash(self, stash: &mut StringStash) -> Option<T> {
-        match self {
-            Ok(v) => Some(v),
-            Err(e) => {
-                stash.mut_errors().push(e.to_string());
-                None
-            }
-        }
-    }
-
-    fn or_fail(self, stash: &mut StringStash) -> Result<T, ErrorList<String>> {
-        self.map_err(|e| {
-            stash.mut_errors().push(e.to_string());
-            stash.consume()
-        })
-    }
-}
-
-/// Allows stashing errors from a `Result<T, ErrorList<String>>` into a `StringStash`.
+/// Allows stashing errors from ANY result error type that implements `std::fmt::Display` into a `StringStash`.
 ///
-/// Unpacks the individual child errors from this result's `ErrorList` to the target stash.
-impl<T> StashableResult<T, String, ErrorList<String>, StringStash> for Result<T, ErrorList<String>> {
+/// If the error type is an `ErrorList<StringError>` or `ErrorList<BoxedError>`, it will be unpacked 
+/// and its individual child errors will be stashed separately as `StringError`s, maintaining proper 
+/// multi-error formatting.
+impl<T, FE> StashableResult<T, StringError, ErrorList<StringError>, StringStash> for Result<T, FE>
+where
+    FE: Display + Send + Any + 'static,
+{
     fn or_stash(self, stash: &mut StringStash) -> Option<T> {
         match self {
             Ok(v) => Some(v),
             Err(e) => {
-                stash.mut_errors().extend(e);
+                let any_ref = &e as &dyn Any;
+                let error_list_id = TypeId::of::<ErrorList<StringError>>();
+                let boxed_error_list_id = TypeId::of::<ErrorList<BoxedError>>();
+
+                if any_ref.type_id() == error_list_id {
+                    let wrapper = any_ref
+                        .downcast_ref::<ErrorList<StringError>>()
+                        .expect("TypeId matched but downcast failed");
+                    stash.mut_errors().extend(wrapper.clone());
+                } else if any_ref.type_id() == boxed_error_list_id {
+                    let wrapper = any_ref
+                        .downcast_ref::<ErrorList<BoxedError>>()
+                        .expect("TypeId matched but downcast failed");
+                    stash.mut_errors().extend(
+                        wrapper.iter().map(|err| StringError(err.to_string()))
+                    );
+                } else {
+                    stash.mut_errors().push(StringError(e.to_string()));
+                }
                 None
             }
         }
     }
 
-    fn or_fail(self, stash: &mut StringStash) -> Result<T, ErrorList<String>> {
-        match self {
-            Ok(v) => Ok(v),
-            Err(e) => {
-                stash.mut_errors().extend(e);
-                Err(stash.consume())
+    fn or_fail(self, stash: &mut StringStash) -> Result<T, ErrorList<StringError>> {
+        self.map_err(|e| {
+            let any_ref = &e as &dyn Any;
+            let error_list_id = TypeId::of::<ErrorList<StringError>>();
+            let boxed_error_list_id = TypeId::of::<ErrorList<BoxedError>>();
+
+            if any_ref.type_id() == error_list_id {
+                let wrapper = any_ref
+                    .downcast_ref::<ErrorList<StringError>>()
+                    .expect("TypeId matched but downcast failed");
+                stash.mut_errors().extend(wrapper.clone());
+            } else if any_ref.type_id() == boxed_error_list_id {
+                let wrapper = any_ref
+                    .downcast_ref::<ErrorList<BoxedError>>()
+                    .expect("TypeId matched but downcast failed");
+                stash.mut_errors().extend(
+                    wrapper.iter().map(|err| StringError(err.to_string()))
+                );
+            } else {
+                stash.mut_errors().push(StringError(e.to_string()));
             }
-        }
+            stash.consume()
+        })
     }
 }
 
-/// Allows stashing errors from a `Result<T, Vec<String>>` into a `StringStash`.
-impl<T> StashableResult<T, String, ErrorList<String>, StringStash> for Result<T, Vec<String>> {
-    fn or_stash(self, stash: &mut StringStash) -> Option<T> {
-        match self {
-            Ok(v) => Some(v),
-            Err(e) => {
-                stash.mut_errors().extend(e);
-                None
-            }
-        }
-    }
-
-    fn or_fail(self, stash: &mut StringStash) -> Result<T, ErrorList<String>> {
-        match self {
-            Ok(v) => Ok(v),
-            Err(e) => {
-                stash.mut_errors().extend(e);
-                Err(stash.consume())
-            }
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -271,9 +317,9 @@ mod tests {
 
         let errors = stash.fail_now(42).unwrap_err();
         assert_eq!(3, errors.len());
-        assert_eq!("first error", errors[0]);
-        assert_eq!("Second error", errors[1]);
-        assert_eq!("42", errors[2]);
+        assert_eq!("first error", &*errors[0]);
+        assert_eq!("Second error", &*errors[1]);
+        assert_eq!("42", &*errors[2]);
         assert_eq!("Found 3 errors", errors.summary());
     }
 
@@ -296,9 +342,9 @@ mod tests {
         stash.push_all(strs.iter().copied());
         let errors = stash.consume();
         assert_eq!(errors.len(), 3);
-        assert_eq!(errors[0], "error one");
-        assert_eq!(errors[1], "error two");
-        assert_eq!(errors[2], "error three");
+        assert_eq!("error one", &*errors[0]);
+        assert_eq!("error two", &*errors[1]);
+        assert_eq!("error three", &*errors[2]);
     }
 
     #[test]
@@ -319,7 +365,7 @@ mod tests {
         stash.check(false, "should be added");
         stash.check(true, "should not be added");
         assert_eq!(1, stash.len());
-        assert_eq!("should be added", stash.consume()[0]);
+        assert_eq!("should be added", &*stash.consume()[0]);
     }
 
     #[test]
@@ -327,8 +373,8 @@ mod tests {
         let mut stash = StringStash::new();
         stash.extend(vec!["error 1", "error 2"]);
         assert_eq!(stash.len(), 2);
-        let collected: Vec<String> = stash.into_iter().collect();
-        assert_eq!(collected, vec!["error 1".to_string(), "error 2".to_string()]);
+        let collected: Vec<StringError> = stash.into_iter().collect();
+        assert_eq!(collected, vec![StringError("error 1".to_string()), StringError("error 2".to_string())]);
     }
 
     #[test]
@@ -338,34 +384,58 @@ mod tests {
         let value = result.or_stash(&mut stash);
         assert!(value.is_none());
         assert_eq!(1, stash.len());
-        assert_eq!("an error occurred", stash.consume()[0]);
+        assert_eq!("an error occurred", &*stash.consume()[0]);
+    }
+
+    #[test]
+    fn or_stash_with_string_error() {
+        let mut stash = StringStash::new();
+        let result: Result<i32, StringError> = Err(StringError("string error".to_string()));
+        let value = result.or_stash(&mut stash);
+        assert!(value.is_none());
+        assert_eq!(1, stash.len());
+        assert_eq!("string error", &*stash.consume()[0]);
     }
 
     #[test]
     fn or_stash_with_errorlist() {
         let mut target_stash = StringStash::new();
-        let source_errors = ErrorList::new("summary".into(), vec!["error A".to_string(), "error B".to_string()]);
-        let err_value: Result<i32, ErrorList<String>> = Err(source_errors);
+        let source_errors = ErrorList::new("summary".into(), vec![StringError("error A".to_string()), StringError("error B".to_string())]);
+        let err_value: Result<i32, ErrorList<StringError>> = Err(source_errors);
 
         let value = err_value.or_stash(&mut target_stash);
         assert!(value.is_none());
         assert_eq!(2, target_stash.len());
         let errors = target_stash.consume();
-        assert_eq!("error A", errors[0]);
-        assert_eq!("error B", errors[1]);
+        assert_eq!("error A", &*errors[0]);
+        assert_eq!("error B", &*errors[1]);
     }
 
     #[test]
-    fn or_stash_with_vec() {
+    fn or_stash_with_anyhow_error() {
+        let mut stash = StringStash::new();
+        let result: Result<i32, anyhow::Error> = Err(anyhow::anyhow!("anyhow error message"));
+        let value = result.or_stash(&mut stash);
+        assert!(value.is_none());
+        assert_eq!(1, stash.len());
+        assert_eq!("anyhow error message", &*stash.consume()[0]);
+    }
+
+    #[test]
+    fn or_stash_with_boxed_error_list() {
         let mut target_stash = StringStash::new();
-        let err_value: Result<i32, Vec<String>> = Err(vec!["err 1".to_string(), "err 2".to_string()]);
+        let mut source_stash = crate::BoxedStash::new();
+        source_stash.push("boxed err 1");
+        source_stash.push("boxed err 2");
+        let source_errors = source_stash.to_error().unwrap();
+        let err_value: Result<i32, ErrorList<BoxedError>> = Err(source_errors);
 
         let value = err_value.or_stash(&mut target_stash);
         assert!(value.is_none());
         assert_eq!(2, target_stash.len());
         let errors = target_stash.consume();
-        assert_eq!("err 1", errors[0]);
-        assert_eq!("err 2", errors[1]);
+        assert_eq!("boxed err 1", &*errors[0]);
+        assert_eq!("boxed err 2", &*errors[1]);
     }
 
     #[test]
