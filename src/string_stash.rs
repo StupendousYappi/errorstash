@@ -10,7 +10,7 @@ use crate::{ErrorStash, StashableResult};
 /// This type allows `StringStash` to collect errors that implement the `Error` trait,
 /// while maintaining string-based error handling.
 #[derive(Clone, PartialEq, Eq)]
-pub struct StringError(pub Cow<'static, str>);
+pub struct StringError(Cow<'static, str>);
 
 impl std::ops::Deref for StringError {
     type Target = str;
@@ -111,7 +111,7 @@ impl StringError {
 }
 
 /// An [`ErrorStash`] that accepts anything that implements [`Display`]
-/// and stores it as a [`StringError`].
+/// and stores it as a [`StringError`] containing its display text.
 ///
 /// It produces an [`ErrorList<StringError>`] if any errors are collected.
 ///

@@ -126,7 +126,7 @@ where
     /// returns `None`.
     ///
     /// This method is designed for use with the `?` operator in functions that
-    /// return `Option<T>`, such as functions that have their ErrorStash passed
+    /// return `Option<T>`, such as functions that have a mutable ErrorStash passed
     /// into them and don't return their errors directly. It can be called at
     /// any time with `?` to return from the function if any errors have been
     /// collected.
@@ -138,13 +138,12 @@ where
         }
     }
 
-    /// If the condition is false, adds a formatted error to the stash. Otherwise,
-    /// does nothing.
+    /// If the condition is false, adds a formatted error to the stash. Otherwise, does nothing.
     ///
-    /// This method is like [`check`][crate::BoxedStash::check], but allows you
-    /// to provide a dynamically generated error value via the [`format_args!`]
-    /// macro, as long as this stash's error type implements `From<String>`.
-    /// This is always true for [`BoxedStash`][crate::BoxedStash], but for
+    /// This method is like [`check`][crate::BoxedStash::check], but allows you to provide a
+    /// dynamically generated error value via the [`format_args!`] macro, as long as this stash's
+    /// error type implements `From<String>`.  This is always true for
+    /// [`BoxedStash`][crate::BoxedStash] and [`StringStash`][crate::StringStash], but for
     /// [`TypedStash`][crate::TypedStash] it depends on the error type used.
     ///
     /// For performance, the formatting is only evaluated if the condition is
@@ -212,24 +211,20 @@ where
     fn to_error(self) -> Option<W>;
 }
 
-/// An extension trait for [Result] that adds
-/// [or_stash][StashableResult::or_stash] and
-/// [or_fail][StashableResult::or_fail] methods that can be used to stash
-/// errors.
+/// An extension trait for [Result] that adds [or_stash][StashableResult::or_stash] and
+/// [or_fail][StashableResult::or_fail] methods that can be used to stash errors.
 pub trait StashableResult<T, E, W, S>
 where
     E: Display + Debug + Send + 'static,
     W: Send + 'static,
     S: ErrorStash<E, W>,
 {
-    /// Consumes this `Result`, returning `Some(T)` if this result is ok, or
-    /// collecting the error into the provided `ErrorStash` and returning `None`
-    /// if this result is an error.
+    /// Consumes this `Result`, returning `Some(T)` if this result is ok, or collecting the error
+    /// into the provided `ErrorStash` and returning `None` if this result is an error.
     ///
-    /// This method can be used when you want to stash the result's error but
-    /// continue execution. It will return an empty `Option` if an error
-    /// occurred, so you should not attempt to unwrap the result until after
-    /// checking the stash for errors.
+    /// This method can be used when you want to stash the result's error but continue execution. It
+    /// will return an empty `Option` if an error occurred, so you should not attempt to unwrap the
+    /// result until after checking the stash for errors.
     ///
     /// ## Example
     /// ```
@@ -250,11 +245,10 @@ where
     ///
     /// # Use with iterators
     ///
-    /// This method can also be used with the [filter_map][Iterator::filter_map]
-    /// method of iterators to transform an iterator of `Result<T, E>` into an
-    /// iterator of `T`, stashing any errors along the way. Note that the
-    /// [`StashErrorsIter`] trait does the same thing via a method on the
-    /// `Iterator` rather than on each `Result`.
+    /// This method can also be used with the [filter_map][Iterator::filter_map] method of iterators
+    /// to transform an iterator of `Result<T, E>` into an iterator of `T`, stashing any errors
+    /// along the way. Note that the [`StashErrorsIter`] trait does the same thing via a method on
+    /// the `Iterator` rather than on each `Result`.
     ///
     /// ## Example
     /// ```
@@ -272,21 +266,18 @@ where
     /// ```
     fn or_stash(self, stash: &mut S) -> Option<T>;
 
-    /// Consumes this `Result`, returning `Ok(T)` if this result is ok, or
-    /// collecting the error into the provided `ErrorStash` and returning the
-    /// aggregated errors in a `Err(W)` if this result is an error.
+    /// Consumes this `Result`, returning `Ok(T)` if this result is ok, or collecting the error into
+    /// the provided `ErrorStash` and returning the aggregated errors in a `Err(W)` if this result
+    /// is an error.
     ///
-    /// This changes the result's error from containing just the original error
-    /// to containing all errors collected in the stash (including this one). It
-    /// can be used when you want to return immediately if the previous
-    /// operation failed, but want to include all previously collected errors in
-    /// the error result as well.
+    /// This changes the result's error from containing just the original error to containing all
+    /// errors collected in the stash (including this one). It can be used when you want to return
+    /// immediately if the previous operation failed, but want to include all previously collected
+    /// errors in the error result as well.
     ///
-    /// Note that if this result is `Ok`, but the stash already contains errors,
-    /// this method will still return `Ok(T)`. To return `Err(W)` if any errors
-    /// have been collected, call
-    /// [`fail_unless_empty`][ErrorStash::fail_unless_empty] on the stash after
-    /// calling this method.
+    /// Note that if this result is `Ok`, but the stash already contains errors, this method will
+    /// still return `Ok(T)`. To return `Err(W)` if any errors have been collected, call
+    /// [`fail_unless_empty`][ErrorStash::fail_unless_empty] on the stash after calling this method.
     ///
     /// ## Example
     /// ```
