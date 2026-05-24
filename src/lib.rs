@@ -99,14 +99,14 @@
 //!   a specific type of child error and can emit them in a user-defined
 //!   wrapper error type.
 //! - [`StringStash`]: An error stash that collects anything that implements
-//!   `Display` and stores it as a `StringError` at add time, wrapping them in an
+//!   `Display` and stores it as a `StringError`, wrapping them in an
 //!   [`ErrorList<StringError>`].
 //!
-//! Both types of stashes implement the [`ErrorStash`] trait, which provides
+//! All three stash types implement the [`ErrorStash`] trait, which provides
 //! common methods for checking if any errors have been collected, and emitting
 //! the collected errors as a single error result.  All method that mutate the
 //! stash are defined on the implementation types (the method names for mutation
-//! methods are the same on both types, but not the type signatures).
+//! methods are the same on all types, but not the type signatures).
 //!
 //! This crate provides a builtin error aggregation type, [`ErrorList`], but
 //! can also be used with your own error collection types via the
