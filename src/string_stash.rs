@@ -1,15 +1,16 @@
+use std::borrow::Cow;
 use std::fmt::{Debug, Display};
 
 use crate::error_list::{ErrorList, ErrorSummary};
 use crate::error_stash::ErrorStashInternal;
 use crate::{ErrorStash, StashableResult};
 
-/// A simple wrapper around [`String`] that implements [`std::error::Error`].
+/// A simple wrapper around [`Cow<str>`] that implements [`std::error::Error`].
 ///
 /// This type allows `StringStash` to collect errors that implement the `Error` trait,
 /// while maintaining string-based error handling.
 #[derive(Clone, PartialEq, Eq)]
-pub struct StringError(pub String);
+pub struct StringError(pub Cow<'static, str>);
 
 impl std::ops::Deref for StringError {
     type Target = str;
@@ -39,21 +40,28 @@ impl std::error::Error for StringError {}
 impl From<String> for StringError {
     #[inline]
     fn from(s: String) -> Self {
-        Self(s)
+        Self(Cow::Owned(s))
     }
 }
 
-impl From<&str> for StringError {
+impl From<&'static str> for StringError {
     #[inline]
-    fn from(s: &str) -> Self {
-        Self(s.to_string())
+    fn from(s: &'static str) -> Self {
+        Self(Cow::Borrowed(s))
+    }
+}
+
+impl From<Cow<'static, str>> for StringError {
+    #[inline]
+    fn from(s: Cow<'static, str>) -> Self {
+        Self(s)
     }
 }
 
 impl From<StringError> for String {
     #[inline]
     fn from(err: StringError) -> Self {
-        err.0
+        err.0.into_owned()
     }
 }
 
@@ -68,6 +76,37 @@ impl PartialEq<&str> for StringError {
     #[inline]
     fn eq(&self, other: &&str) -> bool {
         self.0 == *other
+    }
+}
+
+impl StringError {
+    /// Creates a new `StringError` from any type that implements `Display + 'static`.
+    ///
+    /// This uses zero-cost type reflection to avoid copies for `&'static str`
+    /// and clones for `String`.
+    pub fn from<T: Display + 'static>(err: T) -> Self {
+        use std::any::TypeId;
+        use std::mem::ManuallyDrop;
+
+        let err = ManuallyDrop::new(err);
+        let type_id = TypeId::of::<T>();
+
+        if type_id == TypeId::of::<&'static str>() {
+            let s: &'static str = unsafe { std::ptr::read(&*err as *const _ as *const &'static str) };
+            Self(Cow::Borrowed(s))
+        } else if type_id == TypeId::of::<String>() {
+            let s: String = unsafe { std::ptr::read(&*err as *const _ as *const String) };
+            Self(Cow::Owned(s))
+        } else if type_id == TypeId::of::<Cow<'static, str>>() {
+            let s: Cow<'static, str> = unsafe { std::ptr::read(&*err as *const _ as *const Cow<'static, str>) };
+            Self(s)
+        } else if type_id == TypeId::of::<Self>() {
+            let s: Self = unsafe { std::ptr::read(&*err as *const _ as *const Self) };
+            s
+        } else {
+            let s = unsafe { std::ptr::read(&*err as *const T) };
+            Self(Cow::Owned(s.to_string()))
+        }
     }
 }
 
@@ -175,8 +214,8 @@ impl StringStash {
     }
 
     /// Adds a child error to the stash, converting it to a StringError.
-    pub fn push(&mut self, err: impl Display) -> &mut Self {
-        self.mut_errors().push(StringError(err.to_string()));
+    pub fn push(&mut self, err: impl Display + 'static) -> &mut Self {
+        self.mut_errors().push(StringError::from(err));
         self
     }
 
@@ -184,10 +223,10 @@ impl StringStash {
     pub fn push_all<T, It>(&mut self, errors: It) -> &mut Self
     where
         It: IntoIterator<Item = T>,
-        T: Display,
+        T: Display + 'static,
     {
         self.mut_errors()
-            .extend(errors.into_iter().map(|e| StringError(e.to_string())));
+            .extend(errors.into_iter().map(|e| StringError::from(e)));
         self
     }
 
@@ -196,17 +235,17 @@ impl StringStash {
     ///
     /// If you want to return immediately if the condition is false,
     /// chain a call to [`fail_unless_empty`][ErrorStash::fail_unless_empty] after this method.
-    pub fn check(&mut self, condition: bool, e: impl Display) -> &mut Self {
+    pub fn check(&mut self, condition: bool, e: impl Display + 'static) -> &mut Self {
         if !condition {
-            self.mut_errors().push(StringError(e.to_string()));
+            self.mut_errors().push(StringError::from(e));
         }
         self
     }
 
     /// Adds an error and immediately returns `Err(ErrorList<StringError>)` with all collected
     /// errors.
-    pub fn fail_now(&mut self, e: impl Display) -> Result<(), ErrorList<StringError>> {
-        self.mut_errors().push(StringError(e.to_string()));
+    pub fn fail_now(&mut self, e: impl Display + 'static) -> Result<(), ErrorList<StringError>> {
+        self.mut_errors().push(StringError::from(e));
         let wrapper = self.consume();
         Err(wrapper)
     }
@@ -220,11 +259,11 @@ impl Display for StringStash {
 
 impl<T> Extend<T> for StringStash
 where
-    T: Display,
+    T: Display + 'static,
 {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         self.errors
-            .extend(iter.into_iter().map(|t| StringError(t.to_string())));
+            .extend(iter.into_iter().map(|t| StringError::from(t)));
     }
 }
 
@@ -268,9 +307,9 @@ where
                         .expect("TypeId matched but downcast failed");
                     stash
                         .mut_errors()
-                        .extend(wrapper.iter().map(|err| StringError(err.to_string())));
+                        .extend(wrapper.iter().map(|err| StringError::from(err.to_string())));
                 } else {
-                    stash.mut_errors().push(StringError(e.to_string()));
+                    stash.mut_errors().push(StringError::from(e));
                 }
                 None
             }
@@ -294,9 +333,9 @@ where
                     .expect("TypeId matched but downcast failed");
                 stash
                     .mut_errors()
-                    .extend(wrapper.iter().map(|err| StringError(err.to_string())));
+                    .extend(wrapper.iter().map(|err| StringError::from(err.to_string())));
             } else {
-                stash.mut_errors().push(StringError(e.to_string()));
+                stash.mut_errors().push(StringError::from(e));
             }
             stash.consume()
         })
@@ -378,8 +417,8 @@ mod tests {
         assert_eq!(
             collected,
             vec![
-                StringError("error 1".to_string()),
-                StringError("error 2".to_string())
+                StringError::from("error 1".to_string()),
+                StringError::from("error 2".to_string())
             ]
         );
     }
@@ -397,7 +436,7 @@ mod tests {
     #[test]
     fn or_stash_with_string_error() {
         let mut stash = StringStash::new();
-        let result: Result<i32, StringError> = Err(StringError("string error".to_string()));
+        let result: Result<i32, StringError> = Err(StringError::from("string error".to_string()));
         let value = result.or_stash(&mut stash);
         assert!(value.is_none());
         assert_eq!(1, stash.len());
@@ -410,8 +449,8 @@ mod tests {
         let source_errors = ErrorList::new(
             "summary".into(),
             vec![
-                StringError("error A".to_string()),
-                StringError("error B".to_string()),
+                StringError::from("error A".to_string()),
+                StringError::from("error B".to_string()),
             ],
         );
         let err_value: Result<i32, ErrorList<StringError>> = Err(source_errors);
@@ -471,5 +510,29 @@ mod tests {
         // fail_unless_empty on an empty stash should return Ok(())
         let res = stash3.fail_unless_empty();
         assert!(res.is_ok());
+    }
+
+    #[test]
+    fn string_error_reflection_optimization() {
+        use std::borrow::Cow;
+
+        let literal = "test error literal";
+        let err_literal = StringError::from(literal);
+        assert!(matches!(err_literal.0, Cow::Borrowed(_)));
+        assert_eq!(&*err_literal, literal);
+
+        let owned = "test error owned".to_string();
+        let err_owned = StringError::from(owned);
+        assert!(matches!(err_owned.0, Cow::Owned(_)));
+        assert_eq!(&*err_owned, "test error owned");
+
+        let cow_borrowed: Cow<'static, str> = Cow::Borrowed("cow borrowed");
+        let err_cow_borrowed = StringError::from(cow_borrowed);
+        assert!(matches!(err_cow_borrowed.0, Cow::Borrowed(_)));
+        assert_eq!(&*err_cow_borrowed, "cow borrowed");
+
+        let self_err = StringError::from(StringError::from("nested"));
+        assert!(matches!(self_err.0, Cow::Borrowed(_)));
+        assert_eq!(&*self_err, "nested");
     }
 }
