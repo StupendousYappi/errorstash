@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## UNRELEASED
+## v0.4.0
 
 - Added the `StringStash` stash type
 - Updated dependencies

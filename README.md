@@ -64,6 +64,9 @@ an
 - [`TypedStash`](https://docs.rs/errorstash/latest/errorstash/struct.TypedStash.html)
   a stash with a generic type for its child errors, requiring all errors to have
 the same type, and allowing for custom wrapper error types
+- [`StringStash`](https://docs.rs/errorstash/latest/errorstash/struct.StringStash.html) a 
+  stash that accepts as errors any value that implements `Display` (which includes all values that
+  implement `Error`) and stores its errors as strings
 
 [![Crates.io](https://img.shields.io/crates/v/errorstash.svg)](https://crates.io/crates/errorstash)
 [![Docs.rs](https://docs.rs/errorstash/badge.svg)](https://docs.rs/errorstash)
