@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## UNRELEASED
+
+- Added the `StringStash` stash type
+- Updated dependencies
+
 ## v0.3.1 (2025-10-21)
 
 - Added support for flattening nested ErrorLists when using `StashableResult`
