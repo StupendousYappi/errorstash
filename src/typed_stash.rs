@@ -90,9 +90,7 @@ where
     W: Error + Send + 'static,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TypedStash")
-            .field("errors", &self.errors)
-            .finish()
+        f.debug_struct("TypedStash").field("errors", &self.errors).finish()
     }
 }
 
@@ -101,7 +99,7 @@ where
     E: Debug + Display + Send + 'static,
     W: Error + Send + 'static,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "TypedStash with {} errors", self.errors.len())
     }
 }
@@ -185,10 +183,7 @@ where
     /// ```
     pub fn with_summary(summary: &'static str) -> Self {
         let constructor = WrapperConstructor::for_static_str(summary, Self::create_error_list);
-        Self {
-            errors: Vec::new(),
-            constructor,
-        }
+        Self { errors: Vec::new(), constructor }
     }
 
     fn create_error_list(errors: Vec<E>, summary: &'static str) -> ErrorList<E> {
@@ -249,10 +244,7 @@ where
     where
         F: Fn(Vec<E>) -> W + Send + 'static,
     {
-        Self {
-            errors: Vec::new(),
-            constructor: WrapperConstructor::for_closure(constructor),
-        }
+        Self { errors: Vec::new(), constructor: WrapperConstructor::for_closure(constructor) }
     }
 
     /// Adds a child error to the stash.
@@ -587,11 +579,7 @@ mod tests {
 
         let result = collector.fail_unless_empty();
 
-        let messages = result
-            .unwrap_err()
-            .into_iter()
-            .map(|e| e.to_string())
-            .collect::<Vec<_>>();
+        let messages = result.unwrap_err().into_iter().map(|e| e.to_string()).collect::<Vec<_>>();
 
         assert_eq!(messages, vec!["first", "second"]);
     }
@@ -642,10 +630,7 @@ mod tests {
     #[test]
     fn push_can_be_chained() {
         let mut collector: TypedStash<_, _> = TypedStash::with_constructor(WrapperError::new);
-        collector
-            .push(oops!("first"))
-            .push(oops!("second"))
-            .push(oops!("third"));
+        collector.push(oops!("first")).push(oops!("second")).push(oops!("third"));
 
         let errors = collector.to_error().unwrap().errors;
         assert_eq!(errors.len(), 3);
@@ -800,18 +785,10 @@ mod tests {
     fn or_stash_with_iterator_filter_map() {
         let mut collector: TypedStash<_, _> = TypedStash::with_constructor(WrapperError::new);
 
-        let results = vec![
-            Ok(1),
-            Err(oops!("error 1")),
-            Ok(2),
-            Err(oops!("error 2")),
-            Ok(3),
-        ];
+        let results = vec![Ok(1), Err(oops!("error 1")), Ok(2), Err(oops!("error 2")), Ok(3)];
 
-        let values: Vec<i32> = results
-            .into_iter()
-            .filter_map(|r| r.or_stash(&mut collector))
-            .collect();
+        let values: Vec<i32> =
+            results.into_iter().filter_map(|r| r.or_stash(&mut collector)).collect();
 
         assert_eq!(values, vec![1, 2, 3]);
         assert_eq!(collector.errors().len(), 2);
@@ -1006,11 +983,7 @@ mod tests {
     #[test]
     fn stash_errors_with_all_err_values() {
         let mut collector: TypedStash<_, _> = TypedStash::with_constructor(WrapperError::new);
-        let results = vec![
-            Err(oops!("error 1")),
-            Err(oops!("error 2")),
-            Err(oops!("error 3")),
-        ];
+        let results = vec![Err(oops!("error 1")), Err(oops!("error 2")), Err(oops!("error 3"))];
 
         let values: Vec<i32> = results.into_iter().stash_errors(&mut collector).collect();
 
@@ -1024,14 +997,8 @@ mod tests {
     #[test]
     fn stash_errors_with_mixed_results() {
         let mut collector: TypedStash<_, _> = TypedStash::with_constructor(WrapperError::new);
-        let results = vec![
-            Ok(1),
-            Err(oops!("first error")),
-            Ok(2),
-            Ok(3),
-            Err(oops!("second error")),
-            Ok(4),
-        ];
+        let results =
+            vec![Ok(1), Err(oops!("first error")), Ok(2), Ok(3), Err(oops!("second error")), Ok(4)];
 
         let values: Vec<i32> = results.into_iter().stash_errors(&mut collector).collect();
 
@@ -1044,14 +1011,8 @@ mod tests {
     #[test]
     fn stash_errors_can_be_chained_with_other_iterator_methods() {
         let mut collector: TypedStash<_, _> = TypedStash::with_constructor(WrapperError::new);
-        let results = vec![
-            Ok(1),
-            Err(oops!("error")),
-            Ok(2),
-            Ok(3),
-            Err(oops!("another error")),
-            Ok(4),
-        ];
+        let results =
+            vec![Ok(1), Err(oops!("error")), Ok(2), Ok(3), Err(oops!("another error")), Ok(4)];
 
         // Chain with map and filter
         let values: Vec<i32> = results
@@ -1093,11 +1054,7 @@ mod tests {
     #[test]
     fn push_all_with_multiple_errors() {
         let mut collector: TypedStash<_, _> = TypedStash::with_constructor(WrapperError::new);
-        let errors = vec![
-            oops!("first error"),
-            oops!("second error"),
-            oops!("third error"),
-        ];
+        let errors = vec![oops!("first error"), oops!("second error"), oops!("third error")];
 
         collector.push_all(errors);
 
@@ -1221,10 +1178,7 @@ mod tests {
 
         let output_errors: Vec<String> = collector.into_iter().map(|e| e.to_string()).collect();
 
-        assert_eq!(
-            output_errors,
-            vec!["error_1", "error_2", "error_3", "error_4", "error_5"],
-        );
+        assert_eq!(output_errors, vec!["error_1", "error_2", "error_3", "error_4", "error_5"],);
     }
 
     // Test for adding one ErrorStash to another via push_all
@@ -1323,20 +1277,13 @@ mod tests {
     #[test]
     fn new_initializes_with_default_summary() {
         // Create a new stash with default summary
-        let errlist = TypedStash::new()
-            .push("error one")
-            .push("error two")
-            .to_error()
-            .unwrap();
+        let errlist = TypedStash::new().push("error one").push("error two").to_error().unwrap();
 
         // to_error should return Some(ErrorList) and its summary() should
         // include the default summary with count substituted (2)
         let summary = errlist.summary();
         assert_eq!(summary, "Encountered 2 errors:");
-        assert_eq!(
-            "Encountered 2 errors:\n- error one\n- error two\n",
-            errlist.to_string()
-        );
+        assert_eq!("Encountered 2 errors:\n- error one\n- error two\n", errlist.to_string());
     }
 
     #[test]

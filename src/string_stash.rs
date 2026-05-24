@@ -85,28 +85,37 @@ impl StringError {
     /// This uses zero-cost type reflection to avoid copies for `&'static str`
     /// and clones for `String`.
     pub fn from<T: Display + 'static>(err: T) -> Self {
-        use std::any::TypeId;
-        use std::mem::ManuallyDrop;
+        use std::any::Any;
 
-        let err = ManuallyDrop::new(err);
-        let type_id = TypeId::of::<T>();
+        let mut err_opt = Some(err);
+        let any: &mut dyn Any = &mut err_opt;
 
-        if type_id == TypeId::of::<&'static str>() {
-            let s: &'static str = unsafe { std::ptr::read(&*err as *const _ as *const &'static str) };
-            Self(Cow::Borrowed(s))
-        } else if type_id == TypeId::of::<String>() {
-            let s: String = unsafe { std::ptr::read(&*err as *const _ as *const String) };
-            Self(Cow::Owned(s))
-        } else if type_id == TypeId::of::<Cow<'static, str>>() {
-            let s: Cow<'static, str> = unsafe { std::ptr::read(&*err as *const _ as *const Cow<'static, str>) };
-            Self(s)
-        } else if type_id == TypeId::of::<Self>() {
-            let s: Self = unsafe { std::ptr::read(&*err as *const _ as *const Self) };
-            s
-        } else {
-            let s = unsafe { std::ptr::read(&*err as *const T) };
-            Self(Cow::Owned(s.to_string()))
+        if let Some(opt) = any.downcast_mut::<Option<&'static str>>() {
+            if let Some(s) = opt.take() {
+                return Self(Cow::Borrowed(s));
+            }
         }
+
+        if let Some(opt) = any.downcast_mut::<Option<String>>() {
+            if let Some(s) = opt.take() {
+                return Self(Cow::Owned(s));
+            }
+        }
+
+        if let Some(opt) = any.downcast_mut::<Option<Cow<'static, str>>>() {
+            if let Some(s) = opt.take() {
+                return Self(s);
+            }
+        }
+
+        if let Some(opt) = any.downcast_mut::<Option<Self>>() {
+            if let Some(s) = opt.take() {
+                return s;
+            }
+        }
+
+        let fallback = err_opt.unwrap();
+        Self(Cow::Owned(fallback.to_string()))
     }
 }
 
@@ -180,10 +189,7 @@ impl StringStash {
     /// Creates a new StringStash with the given summary line.
     pub fn with_summary(summary: &'static str) -> Self {
         let summary = ErrorSummary::new_static(summary);
-        Self {
-            summary,
-            errors: Vec::new(),
-        }
+        Self { summary, errors: Vec::new() }
     }
 
     /// Sets a custom summary line for the wrapper error.
@@ -225,8 +231,7 @@ impl StringStash {
         It: IntoIterator<Item = T>,
         T: Display + 'static,
     {
-        self.mut_errors()
-            .extend(errors.into_iter().map(|e| StringError::from(e)));
+        self.mut_errors().extend(errors.into_iter().map(|e| StringError::from(e)));
         self
     }
 
@@ -262,8 +267,7 @@ where
     T: Display + 'static,
 {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        self.errors
-            .extend(iter.into_iter().map(|t| StringError::from(t)));
+        self.errors.extend(iter.into_iter().map(|t| StringError::from(t)));
     }
 }
 
@@ -292,7 +296,7 @@ where
         match self {
             Ok(v) => Some(v),
             Err(e) => {
-                let any_ref = &e as &dyn Any;
+                let any_ref: &dyn Any = &e;
                 let error_list_id = TypeId::of::<ErrorList<StringError>>();
                 let boxed_error_list_id = TypeId::of::<ErrorList<BoxedError>>();
 
@@ -318,7 +322,7 @@ where
 
     fn or_fail(self, stash: &mut StringStash) -> Result<T, ErrorList<StringError>> {
         self.map_err(|e| {
-            let any_ref = &e as &dyn Any;
+            let any_ref: &dyn Any = &e;
             let error_list_id = TypeId::of::<ErrorList<StringError>>();
             let boxed_error_list_id = TypeId::of::<ErrorList<BoxedError>>();
 

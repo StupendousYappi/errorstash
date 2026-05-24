@@ -20,3 +20,11 @@ eyre = "0.6.12"
 test-log = "0.2.18"
 thiserror = "2.0.18"
 url = "2.5.7"
+
+[lints.rust]
+missing_docs = "deny"
+missing_debug_implementations = "warn"
+unsafe_code = "deny"
+unused_qualifications = "warn"
+trivial_casts = "deny"
+trivial_numeric_casts = "deny"

@@ -25,11 +25,9 @@ impl Debug for ErrorSummary {
             ErrorSummary::Static(summary, count) => {
                 f.debug_tuple("Static").field(summary).field(count).finish()
             }
-            ErrorSummary::Dynamic(_, count) => f
-                .debug_tuple("Dynamic")
-                .field(&"<closure>")
-                .field(count)
-                .finish(),
+            ErrorSummary::Dynamic(_, count) => {
+                f.debug_tuple("Dynamic").field(&"<closure>").field(count).finish()
+            }
         }
     }
 }
@@ -87,9 +85,8 @@ impl Display for ErrorSummary {
         let as_cow = self.as_cow();
         let raw_summary = as_cow.as_ref();
         // Find the placeholder "{count}" in the summary
-        let count_loc = raw_summary
-            .find(COUNT_PLACEHOLDER)
-            .map(|i| (i, i + COUNT_PLACEHOLDER.len()));
+        let count_loc =
+            raw_summary.find(COUNT_PLACEHOLDER).map(|i| (i, i + COUNT_PLACEHOLDER.len()));
         if let Some((start, end)) = count_loc {
             f.write_str(&raw_summary[..start])?;
             write!(f, "{}", count)?;
@@ -146,7 +143,7 @@ impl<T> Debug for ErrorList<T>
 where
     T: Display + Debug,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ErrorList")
             .field("summary", &self.summary.as_cow().as_ref())
             .field("errors", &self.errors)
@@ -160,10 +157,7 @@ where
     T: Display + Debug + Clone,
 {
     fn clone(&self) -> Self {
-        Self {
-            summary: self.summary.freeze(),
-            errors: self.errors.clone(),
-        }
+        Self { summary: self.summary.freeze(), errors: self.errors.clone() }
     }
 }
 
@@ -206,6 +200,7 @@ where
         Self { summary, errors }
     }
 
+    /// Returns a `Vec` of this list's errors, consuming this list.
     pub fn to_vec(self) -> Vec<T> {
         self.errors
     }
