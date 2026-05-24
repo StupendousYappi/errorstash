@@ -141,10 +141,7 @@ impl StringStash {
     /// Creates a new StringStash with the given summary line.
     pub fn with_summary(summary: &'static str) -> Self {
         let summary = ErrorSummary::new_static(summary);
-        Self {
-            summary,
-            errors: Vec::new(),
-        }
+        Self { summary, errors: Vec::new() }
     }
 
     /// Sets a custom summary line for the wrapper error.
@@ -186,8 +183,7 @@ impl StringStash {
         It: IntoIterator<Item = T>,
         T: Display,
     {
-        self.mut_errors()
-            .extend(errors.into_iter().map(|e| StringError(e.to_string())));
+        self.mut_errors().extend(errors.into_iter().map(|e| StringError(e.to_string())));
         self
     }
 
@@ -223,8 +219,7 @@ where
     T: Display,
 {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-        self.errors
-            .extend(iter.into_iter().map(|t| StringError(t.to_string())));
+        self.errors.extend(iter.into_iter().map(|t| StringError(t.to_string())));
     }
 }
 
@@ -292,9 +287,7 @@ where
                 let wrapper = any_ref
                     .downcast_ref::<ErrorList<BoxedError>>()
                     .expect("TypeId matched but downcast failed");
-                stash
-                    .mut_errors()
-                    .extend(wrapper.iter().map(|err| StringError(err.to_string())));
+                stash.mut_errors().extend(wrapper.iter().map(|err| StringError(err.to_string())));
             } else {
                 stash.mut_errors().push(StringError(e.to_string()));
             }
@@ -377,10 +370,7 @@ mod tests {
         let collected: Vec<StringError> = stash.into_iter().collect();
         assert_eq!(
             collected,
-            vec![
-                StringError("error 1".to_string()),
-                StringError("error 2".to_string())
-            ]
+            vec![StringError("error 1".to_string()), StringError("error 2".to_string())]
         );
     }
 
@@ -409,10 +399,7 @@ mod tests {
         let mut target_stash = StringStash::new();
         let source_errors = ErrorList::new(
             "summary".into(),
-            vec![
-                StringError("error A".to_string()),
-                StringError("error B".to_string()),
-            ],
+            vec![StringError("error A".to_string()), StringError("error B".to_string())],
         );
         let err_value: Result<i32, ErrorList<StringError>> = Err(source_errors);
 
