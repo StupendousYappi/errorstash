@@ -483,7 +483,7 @@ mod tests {
     }
 
     impl Display for CustomError {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             write!(f, "{}", self.msg)
         }
     }
@@ -494,7 +494,7 @@ mod tests {
         }
     }
 
-    impl std::error::Error for CustomError {}
+    impl Error for CustomError {}
 
     macro_rules! oops {
         ($fmt:literal $(, $args:expr)* $(,)?) => {
@@ -516,7 +516,7 @@ mod tests {
     }
 
     impl std::fmt::Display for StringErrorWrapper {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             for err in &self.errors {
                 writeln!(f, "- {}", err)?;
             }
@@ -524,7 +524,7 @@ mod tests {
         }
     }
 
-    impl std::error::Error for StringErrorWrapper {}
+    impl Error for StringErrorWrapper {}
 
     impl StringErrorWrapper {
         fn new(errors: Vec<String>) -> Self {
@@ -547,7 +547,7 @@ mod tests {
     }
 
     impl Display for WrapperError {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             for error in &self.errors {
                 writeln!(f, "- {}", error)?;
             }
@@ -561,7 +561,7 @@ mod tests {
         }
     }
 
-    impl std::error::Error for WrapperError {}
+    impl Error for WrapperError {}
 
     #[test]
     fn returns_ok_when_no_errors() {
