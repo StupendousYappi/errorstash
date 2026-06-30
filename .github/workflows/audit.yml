@@ -10,6 +10,10 @@ on:
       - '**/Cargo.lock'
   pull_request:
 
+permissions:
+  issues: write
+  contents: read # Required if the action needs to check out the repository
+
 jobs:
   audit:
     runs-on: ubuntu-latest
